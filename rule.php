@@ -24,7 +24,18 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/quiz/accessrule/accessrulebase.php');
+use mod_quiz\quiz_settings;
+
+// Maintain compatibility with Moodle 4.2+ class loader and older versions.
+if (class_exists('\mod_quiz\local\access_rule_base')) {
+    if (!class_exists('quiz_access_rule_base', false)) {
+        \class_alias('\mod_quiz\local\access_rule_base', 'quiz_access_rule_base');
+    }
+} else {
+    require_once($CFG->dirroot . '/mod/quiz/accessrule/accessrulebase.php');
+}
+
+require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
 /**
  * Live proctoring quiz access rule.
@@ -41,9 +52,16 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
      * @return self|null the rule, if applicable, else null.
      */
     public static function make(quiz_settings $quizobj, $timenow, $canignoretimelimits) {
-        $settings = self::get_quiz_proctoring_settings($quizobj->get_quizid());
-        if (empty($settings) || !$settings->enablecamera) {
-            return null;
+        $quiz = $quizobj->get_quiz();
+        if (isset($quiz->liveproctoring_enablecamera)) {
+            if (empty($quiz->liveproctoring_enablecamera)) {
+                return null;
+            }
+        } else {
+            $settings = self::get_quiz_proctoring_settings($quizobj->get_quizid());
+            if (empty($settings) || !$settings->enablecamera) {
+                return null;
+            }
         }
 
         return new self($quizobj, $timenow);
@@ -152,12 +170,14 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
      */
     public static function get_settings_sql($quizid) {
         return [
-            'SELECT lp.enablecamera, lp.enableai, lp.snapshotinterval,
-                    lp.warninglimit, lp.autosubmit, lp.showwatermark,
-                    lp.blocktabs, lp.referencerequired
-               FROM {quizaccess_liveproctoring_quiz} lp
-              WHERE lp.quizid = ?',
-            [$quizid],
+            'liveproctoring.enablecamera AS liveproctoring_enablecamera,
+             liveproctoring.enableai AS liveproctoring_enableai,
+             liveproctoring.snapshotinterval AS liveproctoring_snapshotinterval,
+             liveproctoring.warninglimit AS liveproctoring_warninglimit,
+             liveproctoring.autosubmit AS liveproctoring_autosubmit,
+             liveproctoring.showwatermark AS liveproctoring_showwatermark,
+             liveproctoring.blocktabs AS liveproctoring_blocktabs',
+            'LEFT JOIN {quizaccess_liveproctoring_quiz} liveproctoring ON liveproctoring.quizid = quiz.id',
             [],
         ];
     }

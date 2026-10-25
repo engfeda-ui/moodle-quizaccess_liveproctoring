@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.1-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.2-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,13 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.2 (Build `2026102503`) — 2026-10-25
+- **Moodle 4.4+ Access Manager SQL & Namespace Compatibility Hotfix:**
+  - Resolved `HTTP ERROR 500` on quiz entry (`mod/quiz/view.php`) caused by `dml_exception: أنواع متفاوتة من معاملات استعلام sql!!`.
+  - Refactored `get_settings_sql($quizid)` in `rule.php` to return query fragments `[$fields, $joins, $params]` rather than full SQL statements, preventing SQL parameter placeholder collisions with Moodle's `mod_quiz\access_manager`.
+  - Added `use mod_quiz\quiz_settings;` and dynamic class aliases for full compatibility with Moodle 4.2+ through 4.5+ class loading architecture.
+  - Optimized rule instantiation in `make()` to check pre-joined `$quiz->liveproctoring_enablecamera`, avoiding redundant database queries on non-proctored quizzes.
 
 ### 🌟 v1.0.1 (Build `2026102502`) — 2026-10-25
 - **OpenCode & OpenRouter Multimodal Vision Integration:**

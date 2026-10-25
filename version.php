@@ -24,8 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026102502;
+$plugin->version   = 2026102503;
 $plugin->requires  = 2024042200; // Moodle 4.4+
 $plugin->component = 'quizaccess_liveproctoring';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v1.0.1';
+$plugin->release   = 'v1.0.2';
