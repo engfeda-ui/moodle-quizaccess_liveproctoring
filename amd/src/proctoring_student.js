@@ -56,6 +56,21 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     let reconnectTimer = null;
     let reconnectSeconds = 15;
 
+    /** @type {RTCPeerConnection|null} Live WebRTC connection */
+    let peerConnection = null;
+
+    /** @type {boolean} Whether live spotlight is currently streaming */
+    let isLiveStreaming = false;
+
+    /** @type {boolean} Whether WebRTC answer has been applied */
+    let answerApplied = false;
+
+    /** @type {number|null} Rapid frame timer */
+    let liveFrameTimer = null;
+
+    /** @type {number|null} Signal heartbeat timer */
+    let signalTimer = null;
+
     /**
      * Initialise the student proctoring module.
      *
@@ -66,6 +81,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
         setupTabSwitch();
         showCameraGate(false);
+        setupSignalHeartbeat();
     };
 
     /**
@@ -561,6 +577,183 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             return formInput.value;
         }
         return null;
+    };
+
+    /**
+     * Setup signaling heartbeat for Zoom Spotlight live streaming and teacher control.
+     */
+    const setupSignalHeartbeat = function() {
+        if (!cfg.signalurl) {
+            return;
+        }
+
+        signalTimer = setInterval(function() {
+            const attemptid = getAttemptId();
+            if (!attemptid) {
+                return;
+            }
+
+            fetch(cfg.signalurl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    action:    'check_stream',
+                    attemptid: attemptid,
+                    sesskey:   cfg.sesskey,
+                }),
+            }).then(function(r) {
+                return r.json();
+            }).then(function(data) {
+                if (!data) {
+                    return;
+                }
+
+                // Check force-terminate signal from proctor.
+                if (data.terminate_flag === 1) {
+                    clearInterval(signalTimer);
+                    autoSubmitAttempt();
+                    return;
+                }
+
+                // Check custom proctor warning.
+                if (data.custom_warning) {
+                    showWarning(data.custom_warning);
+                }
+
+                // Check live stream request from teacher.
+                if (data.active && !isLiveStreaming && stream && cameraActive) {
+                    startLiveWebRTC(attemptid);
+                } else if (!data.active && isLiveStreaming) {
+                    stopLiveWebRTC();
+                } else if (data.active && isLiveStreaming && data.answer && !answerApplied && peerConnection) {
+                    applyTeacherAnswer(data.answer, data.teacher_candidates);
+                }
+            }).catch(function() {});
+        }, 2000);
+    };
+
+    /**
+     * Start WebRTC live stream & rapid frames to teacher.
+     */
+    const startLiveWebRTC = function(attemptid) {
+        isLiveStreaming = true;
+        answerApplied = false;
+
+        try {
+            peerConnection = new RTCPeerConnection({
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            });
+
+            if (stream) {
+                stream.getTracks().forEach(function(track) {
+                    peerConnection.addTrack(track, stream);
+                });
+            }
+
+            const iceCandidates = [];
+            peerConnection.onicecandidate = function(event) {
+                if (event.candidate) {
+                    iceCandidates.push(event.candidate);
+                }
+            };
+
+            let instantFrame = null;
+            if (video && canvas) {
+                try {
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(video, 0, 0, canvas.width || 320, canvas.height || 240);
+                    instantFrame = canvas.toDataURL('image/jpeg', 0.6);
+                } catch (e) {}
+            }
+
+            peerConnection.createOffer().then(function(offer) {
+                return peerConnection.setLocalDescription(offer);
+            }).then(function() {
+                const params = {
+                    action:     'send_offer',
+                    attemptid:  attemptid,
+                    offer:      JSON.stringify(peerConnection.localDescription),
+                    candidates: JSON.stringify(iceCandidates),
+                    sesskey:    cfg.sesskey,
+                };
+                if (instantFrame) {
+                    params.frame = instantFrame;
+                }
+                return fetch(cfg.signalurl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(params),
+                });
+            }).catch(function() {});
+
+            if (liveFrameTimer) {
+                clearInterval(liveFrameTimer);
+            }
+            liveFrameTimer = setInterval(function() {
+                if (!isLiveStreaming || !video || !canvas) {
+                    return;
+                }
+                try {
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(video, 0, 0, canvas.width || 320, canvas.height || 240);
+                    const fastFrame = canvas.toDataURL('image/jpeg', 0.6);
+                    fetch(cfg.signalurl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({
+                            action:    'push_live_frame',
+                            attemptid: attemptid,
+                            frame:     fastFrame,
+                            sesskey:   cfg.sesskey,
+                        }),
+                    }).catch(function() {});
+                } catch (e) {}
+            }, 1000);
+
+        } catch (err) {
+            isLiveStreaming = false;
+        }
+    };
+
+    /**
+     * Apply remote SDP answer from teacher.
+     */
+    const applyTeacherAnswer = function(answerStr, candidatesStr) {
+        try {
+            answerApplied = true;
+            const answerDesc = new RTCSessionDescription(JSON.parse(answerStr));
+            peerConnection.setRemoteDescription(answerDesc).then(function() {
+                if (candidatesStr) {
+                    try {
+                        const candidates = JSON.parse(candidatesStr);
+                        candidates.forEach(function(c) {
+                            peerConnection.addIceCandidate(new RTCIceCandidate(c)).catch(function() {});
+                        });
+                    } catch (e) {}
+                }
+            }).catch(function() {});
+        } catch (e) {}
+    };
+
+    /**
+     * Stop WebRTC live stream.
+     */
+    const stopLiveWebRTC = function() {
+        isLiveStreaming = false;
+        answerApplied = false;
+
+        if (liveFrameTimer) {
+            clearInterval(liveFrameTimer);
+            liveFrameTimer = null;
+        }
+
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
     };
 
     return { init };

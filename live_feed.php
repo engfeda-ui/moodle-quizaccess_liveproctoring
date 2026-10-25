@@ -130,6 +130,7 @@ while ((time() - $starttime) < $maxruntime) {
 
         $students[] = [
             'userid'       => $uid,
+            'attemptid'    => (int) $row->attemptid,
             'name'         => fullname($row) . ' (' . $row->username . ')',
             'risk_score'   => $totalrisk,
             'face_detected'=> isset($row->face_detected) ? (bool) $row->face_detected : true,

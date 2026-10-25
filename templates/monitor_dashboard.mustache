@@ -1,54 +1,115 @@
 {{!
-    Live Monitor Dashboard Template
+    Live Monitor Dashboard Template — Zoom Exam Hall
     @template quizaccess_liveproctoring/monitor_dashboard
 }}
-<div class="lp-monitor-wrap" dir="ltr">
+<div class="lp-monitor-wrap" id="lp-hall-root" dir="ltr">
 
-    <!-- Header Bar -->
+    <!-- Zoom Exam Hall Header Bar -->
     <div class="lp-monitor-header">
         <div class="lp-monitor-title">
-            <span class="lp-live-badge">● LIVE</span>
-            🎥 {{#str}}livemonitor, quizaccess_liveproctoring{{/str}}
+            <span class="lp-live-badge">● LIVE MEETING</span>
+            🎥 {{#str}}examhall, quizaccess_liveproctoring{{/str}}
             <span class="lp-quiz-name">— {{{quizname}}}</span>
         </div>
         <div class="lp-header-actions">
+            <button id="lp-btn-fullscreen" class="btn btn-sm btn-outline-info" title="{{#str}}fullscreen, quizaccess_liveproctoring{{/str}}">
+                ⛶ {{#str}}fullscreen, quizaccess_liveproctoring{{/str}}
+            </button>
             <a href="{{{reporturl}}}" class="btn btn-sm btn-outline-secondary" target="_blank">
                 📋 {{#str}}viewreport, quizaccess_liveproctoring{{/str}}
             </a>
         </div>
     </div>
 
-    <!-- Stats Bar -->
-    <div class="lp-stats-bar">
-        <div class="lp-stat-item">
-            <span class="lp-stat-label">{{#str}}activestudents, quizaccess_liveproctoring{{/str}}</span>
-            <span class="lp-stat-value" id="lp-stat-total">—</span>
-        </div>
-        <div class="lp-stat-item">
-            <span class="lp-stat-label">{{#str}}suspicious, quizaccess_liveproctoring{{/str}}</span>
-            <span class="lp-stat-value" id="lp-stat-suspicious">0</span>
-        </div>
-        <div class="lp-stat-item">
-            <span class="lp-stat-label">{{#str}}lastupdate, quizaccess_liveproctoring{{/str}}</span>
-            <span class="lp-stat-value" id="lp-stat-lastupdate">—</span>
-        </div>
-    </div>
-
     <!-- Alert Banner (hidden by default) -->
     <div class="lp-alert-banner" id="lp-alert-banner" style="display:none"></div>
 
-    <!-- Risk Legend -->
-    <div class="lp-legend">
-        <span class="lp-legend-item lp-risk-high">🔴 {{#str}}riskhigh, quizaccess_liveproctoring{{/str}} (≥70)</span>
-        <span class="lp-legend-item lp-risk-medium">🟡 {{#str}}riskmedium, quizaccess_liveproctoring{{/str}} (40–69)</span>
-        <span class="lp-legend-item lp-risk-ok">🟢 {{#str}}riskok, quizaccess_liveproctoring{{/str}} (&lt;40)</span>
-    </div>
-
-    <!-- Student Grid -->
+    <!-- Student Meeting Gallery Grid -->
     <div class="lp-student-grid" id="lp-student-grid">
         <div class="lp-connecting">
             <div class="lp-spinner"></div>
             {{#str}}connecting, quizaccess_liveproctoring{{/str}}
+        </div>
+    </div>
+
+    <!-- Floating Zoom Meeting Bottom Dock -->
+    <div class="lp-meeting-dock">
+        <div class="lp-dock-item">
+            <span class="lp-dock-icon">👥</span>
+            <span class="lp-dock-label">{{#str}}activestudents, quizaccess_liveproctoring{{/str}}:</span>
+            <span class="lp-dock-value" id="lp-stat-total">0</span>
+        </div>
+
+        <div class="lp-dock-divider"></div>
+
+        <div class="lp-dock-item">
+            <span class="lp-dock-icon">🚨</span>
+            <span class="lp-dock-label">{{#str}}suspicious, quizaccess_liveproctoring{{/str}}:</span>
+            <span class="lp-dock-value lp-risk-high" id="lp-stat-suspicious">0</span>
+        </div>
+
+        <div class="lp-dock-divider"></div>
+
+        <!-- Filter Buttons -->
+        <div class="lp-dock-filters">
+            <button id="lp-filter-all" class="lp-dock-btn active">
+                {{#str}}filter_all, quizaccess_liveproctoring{{/str}}
+            </button>
+            <button id="lp-filter-flagged" class="lp-dock-btn">
+                🚨 {{#str}}filter_flagged, quizaccess_liveproctoring{{/str}}
+            </button>
+        </div>
+
+        <div class="lp-dock-divider"></div>
+
+        <!-- Audio Alert Toggle -->
+        <button id="lp-btn-audio" class="lp-dock-btn" title="{{#str}}sound_toggle, quizaccess_liveproctoring{{/str}}">
+            🔔 <span id="lp-audio-status">الصوت: مفعّل</span>
+        </button>
+
+        <div class="lp-dock-divider"></div>
+
+        <div class="lp-dock-item">
+            <span class="lp-dock-label">{{#str}}lastupdate, quizaccess_liveproctoring{{/str}}:</span>
+            <span class="lp-dock-time" id="lp-stat-lastupdate">—</span>
+        </div>
+    </div>
+
+    <!-- Spotlight Theatre Modal (On-Demand Live Stream) -->
+    <div id="lp-spotlight-modal" class="lp-spotlight-modal" style="display:none;">
+        <div class="lp-spotlight-dialog">
+            <div class="lp-spotlight-header">
+                <div class="lp-spotlight-title">
+                    <span class="lp-live-dot">●</span>
+                    <span id="lp-spotlight-name">—</span>
+                </div>
+                <button id="lp-spotlight-close" class="lp-spotlight-close-btn" title="Close">✕</button>
+            </div>
+
+            <div class="lp-spotlight-viewport">
+                <video id="lp-spotlight-video" autoplay playsinline muted></video>
+                <img id="lp-spotlight-frame" alt="Live Frame" style="display:none;" />
+                <div id="lp-spotlight-status" class="lp-spotlight-badge">
+                    📡 {{#str}}connecting_live, quizaccess_liveproctoring{{/str}}
+                </div>
+            </div>
+
+            <!-- Spotlight Proctor Controls -->
+            <div class="lp-spotlight-controls">
+                <div class="lp-warning-box">
+                    <input type="text" id="lp-direct-warning-input" class="lp-warning-input"
+                           placeholder="{{#str}}warning_placeholder, quizaccess_liveproctoring{{/str}}" />
+                    <button id="lp-btn-send-warning" class="lp-btn-action lp-btn-warning">
+                        📢 {{#str}}send_warning, quizaccess_liveproctoring{{/str}}
+                    </button>
+                </div>
+
+                <div class="lp-terminate-box">
+                    <button id="lp-btn-terminate" class="lp-btn-action lp-btn-danger">
+                        🚪 {{#str}}terminate_btn, quizaccess_liveproctoring{{/str}}
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 

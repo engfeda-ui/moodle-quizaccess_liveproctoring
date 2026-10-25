@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.5-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.6-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,14 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.6 (Build `2026102507`) — 2026-10-25
+- **Zoom Exam Hall Interface & On-Demand WebRTC Live Spotlight:**
+  - **Zoom-Style Meeting Gallery UI (`templates/monitor_dashboard.mustache` & `styles.css`)**: Re-imagined instructor dashboard as a Zoom Virtual Exam Hall featuring sleek dark gallery tiles, a floating glassmorphism dock with candidates count, filtered views (All vs Flagged only), alert chime toggle, and one-click Fullscreen Hall mode.
+  - **On-Demand WebRTC Live Spotlight (`amd/src/proctoring_monitor.js` & `live_signal.php`)**: Instructors can click "🎥 Live Spotlight" on any candidate card to open an instant live theatre stage with direct 30 FPS HD WebRTC audio/video streaming, backed by sub-second Turbo Frame fallback.
+  - **Direct Proctor Controls**: Added direct actions inside the Spotlight view allowing instructors to flash instant custom warnings on the student's screen (`send_warning`) or immediately terminate and eject cheating candidates (`terminate_attempt`).
+  - **Student Live Streaming Engine (`amd/src/proctoring_student.js`)**: Background signaling listener automatically negotiates WebRTC peer connections and sends rapid preview frames upon proctor request, while listening for direct warnings and termination signals.
+  - **Web Audio Alert Chimes**: Added zero-dependency synthetic audio alerts ringing in the monitor when candidates trigger high-risk events (tab switches or camera closures).
 
 ### 🌟 v1.0.5 (Build `2026102506`) — 2026-10-25
 - **Full-Screen Camera Hard Gate & Dynamic Behavioral Risk Scoring:**

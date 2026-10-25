@@ -78,6 +78,22 @@ $string['lastseen'] = 'Last seen';
 $string['nostudents'] = 'Waiting for students to start...';
 $string['nostudentsdesc'] = 'Active student webcam feeds will appear here automatically once attempts begin.';
 
+// Zoom Exam Hall strings.
+$string['examhall'] = 'Live Exam Hall';
+$string['spotlight'] = 'Live Video & Spotlight';
+$string['spotlight_title'] = 'Live Direct Video Stream';
+$string['connecting_live'] = 'Connecting to candidate camera...';
+$string['live_active'] = 'Connected Live (30 FPS)';
+$string['send_warning'] = 'Send Instant Warning';
+$string['warning_placeholder'] = 'Type direct warning to flash on student screen...';
+$string['terminate_btn'] = 'Force Terminate Exam';
+$string['terminate_prompt'] = 'Are you sure you want to terminate this student\'s exam attempt immediately?';
+$string['filter_all'] = 'All Candidates';
+$string['filter_flagged'] = 'Flagged Only';
+$string['sound_toggle'] = 'Alert Sound';
+$string['fullscreen'] = 'Fullscreen Hall';
+$string['warning_sent'] = 'Warning sent successfully!';
+
 // Capabilities.
 $string['liveproctoring:viewmonitor'] = 'View live proctoring monitor';
 $string['liveproctoring:viewsnapshots'] = 'View exam snapshots';

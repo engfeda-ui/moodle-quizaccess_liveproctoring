@@ -277,3 +277,271 @@
 @keyframes lp-spin {
     to { transform: rotate(360deg); }
 }
+
+/* ============================================================
+   Zoom Exam Hall & Spotlight Modal Styles
+   ============================================================ */
+
+/* Bottom Floating Meeting Dock */
+.lp-meeting-dock {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 40px;
+    padding: 8px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+}
+
+.lp-dock-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    font-weight: 500;
+}
+
+.lp-dock-value {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #38bdf8;
+}
+
+.lp-dock-value.lp-risk-high {
+    color: #f87171;
+}
+
+.lp-dock-time {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.lp-dock-divider {
+    width: 1px;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.lp-dock-filters {
+    display: flex;
+    gap: 6px;
+}
+
+.lp-dock-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.lp-dock-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+}
+
+.lp-dock-btn.active {
+    background: #2563eb;
+    border-color: #3b82f6;
+    color: #fff;
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.5);
+}
+
+/* Spotlight Theatre Modal */
+.lp-spotlight-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: lp-fadein 0.2s ease;
+}
+
+.lp-spotlight-dialog {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 760px;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+}
+
+.lp-spotlight-header {
+    background: #1e293b;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #334155;
+}
+
+.lp-spotlight-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lp-live-dot {
+    color: #ef4444;
+    font-size: 1.2rem;
+    animation: lp-pulse 1.5s infinite;
+}
+
+.lp-spotlight-close-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: color 0.2s;
+}
+
+.lp-spotlight-close-btn:hover {
+    color: #f87171;
+}
+
+.lp-spotlight-viewport {
+    position: relative;
+    width: 100%;
+    height: 420px;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lp-spotlight-viewport video,
+.lp-spotlight-viewport img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+}
+
+.lp-spotlight-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #38bdf8;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    z-index: 5;
+}
+
+.lp-spotlight-controls {
+    background: #1e293b;
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-top: 1px solid #334155;
+}
+
+.lp-warning-box {
+    display: flex;
+    gap: 10px;
+}
+
+.lp-warning-input {
+    flex: 1;
+    background: #0f172a;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: #f8fafc;
+    font-size: 0.85rem;
+}
+
+.lp-warning-input:focus {
+    outline: none;
+    border-color: #38bdf8;
+}
+
+.lp-btn-action {
+    border: none;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.lp-btn-warning {
+    background: #d97706;
+    color: #fff;
+}
+
+.lp-btn-warning:hover {
+    background: #b45309;
+}
+
+.lp-btn-danger {
+    background: #dc2626;
+    color: #fff;
+}
+
+.lp-btn-danger:hover {
+    background: #b91c1c;
+}
+
+.lp-terminate-box {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Card Spotlight Button */
+.lp-spotlight-trigger {
+    width: 100%;
+    margin-top: 8px;
+    background: #2563eb;
+    border: none;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.lp-spotlight-trigger:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+}
+

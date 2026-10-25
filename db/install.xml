@@ -87,6 +87,31 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="userid_unique" TYPE="unique" FIELDS="userid"/>
       </KEYS>
+    <!-- Live streaming and signaling table for Zoom-style Spotlight -->
+    <TABLE NAME="quizaccess_liveproctoring_live" COMMENT="Live WebRTC signaling and stream requests">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="quizid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="attemptid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="teacherid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="closed" COMMENT="requested|streaming|closed"/>
+        <FIELD NAME="offer" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="answer" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="student_candidates" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="teacher_candidates" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="latest_frame" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="custom_warning" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="terminate_flag" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="attemptid" UNIQUE="true" FIELDS="attemptid"/>
+        <INDEX NAME="quizid_userid" UNIQUE="false" FIELDS="quizid, userid"/>
+      </INDEXES>
     </TABLE>
   </TABLES>
 </XMLDB>

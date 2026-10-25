@@ -78,6 +78,22 @@ $string['lastseen'] = 'آخر ظهور';
 $string['nostudents'] = 'بانتظار بدء الطلاب للاختبار...';
 $string['nostudentsdesc'] = 'ستظهر كاميرات وحالات الطلاب هنا تلقائياً فور بدء محاولاتهم.';
 
+// قاعة الامتحان المرئية (زووم).
+$string['examhall'] = 'قاعة المراقبة المرئية';
+$string['spotlight'] = '🎥 مراقبة حية ومباشرة';
+$string['spotlight_title'] = '🔴 بث فيديو حي ومباشر';
+$string['connecting_live'] = '📡 جارٍ الاتصال المباشر بكاميرا الطالب...';
+$string['live_active'] = '🟢 متصل ومباشر (30 FPS)';
+$string['send_warning'] = '📢 إرسال إنذار فوري';
+$string['warning_placeholder'] = 'اكتب رسالة تنبيه تظهر للطالب فوراً...';
+$string['terminate_btn'] = '🚪 طرد الطالب وإنهاء اختباره';
+$string['terminate_prompt'] = 'هل أنت متأكد من رغبتك في سحب ورقة الاختبار وطرد هذا الطالب فوراً؟';
+$string['filter_all'] = 'جميع الطلاب';
+$string['filter_flagged'] = 'المخالفون فقط';
+$string['sound_toggle'] = 'أصوات التنبيه';
+$string['fullscreen'] = 'ملء الشاشة';
+$string['warning_sent'] = 'تم إرسال الإنذار للطالب بنجاح!';
+
 // الصلاحيات.
 $string['liveproctoring:viewmonitor'] = 'عرض شاشة المراقبة الحية';
 $string['liveproctoring:viewsnapshots'] = 'عرض لقطات صور الامتحان';

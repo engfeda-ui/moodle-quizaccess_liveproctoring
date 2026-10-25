@@ -266,6 +266,9 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
             'pushurl'          => (new moodle_url(
                 '/mod/quiz/accessrule/liveproctoring/push_snapshot.php'
             ))->out(false),
+            'signalurl'        => (new moodle_url(
+                '/mod/quiz/accessrule/liveproctoring/live_signal.php'
+            ))->out(false),
             'sesskey'          => sesskey(),
             'username'         => fullname($USER),
             'strings'          => [

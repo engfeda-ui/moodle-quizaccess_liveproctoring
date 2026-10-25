@@ -43,23 +43,37 @@ $PAGE->set_title(get_string('livemonitor', 'quizaccess_liveproctoring') . ' — 
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagelayout('popup');
 
-$feedurl = (new moodle_url('/mod/quiz/accessrule/liveproctoring/live_feed.php',
+$feedurl   = (new moodle_url('/mod/quiz/accessrule/liveproctoring/live_feed.php',
     ['cmid' => $cmid, 'quizid' => $quizid]))->out(false);
+$signalurl = (new moodle_url('/mod/quiz/accessrule/liveproctoring/live_signal.php'))->out(false);
 
 $PAGE->requires->js_call_amd(
     'quizaccess_liveproctoring/proctoring_monitor',
     'init',
     [[
         'feedurl'   => $feedurl,
+        'signalurl' => $signalurl,
+        'sesskey'   => sesskey(),
         'cmid'      => $cmid,
         'quizid'    => $quizid,
         'strings'   => [
-            'high'      => get_string('riskhigh', 'quizaccess_liveproctoring'),
-            'medium'    => get_string('riskmedium', 'quizaccess_liveproctoring'),
-            'ok'        => get_string('riskok', 'quizaccess_liveproctoring'),
-            'noface'    => get_string('facenotdetected', 'quizaccess_liveproctoring'),
-            'multiface' => get_string('multiplefaces', 'quizaccess_liveproctoring'),
-            'lastseen'  => get_string('lastseen', 'quizaccess_liveproctoring'),
+            'high'                => get_string('riskhigh', 'quizaccess_liveproctoring'),
+            'medium'              => get_string('riskmedium', 'quizaccess_liveproctoring'),
+            'ok'                  => get_string('riskok', 'quizaccess_liveproctoring'),
+            'noface'              => get_string('facenotdetected', 'quizaccess_liveproctoring'),
+            'multiface'           => get_string('multiplefaces', 'quizaccess_liveproctoring'),
+            'lastseen'            => get_string('lastseen', 'quizaccess_liveproctoring'),
+            'spotlight'           => get_string('spotlight', 'quizaccess_liveproctoring'),
+            'spotlight_title'     => get_string('spotlight_title', 'quizaccess_liveproctoring'),
+            'connecting_live'     => get_string('connecting_live', 'quizaccess_liveproctoring'),
+            'live_active'         => get_string('live_active', 'quizaccess_liveproctoring'),
+            'send_warning'        => get_string('send_warning', 'quizaccess_liveproctoring'),
+            'warning_placeholder' => get_string('warning_placeholder', 'quizaccess_liveproctoring'),
+            'terminate_btn'       => get_string('terminate_btn', 'quizaccess_liveproctoring'),
+            'terminate_prompt'    => get_string('terminate_prompt', 'quizaccess_liveproctoring'),
+            'warning_sent'        => get_string('warning_sent', 'quizaccess_liveproctoring'),
+            'filter_all'          => get_string('filter_all', 'quizaccess_liveproctoring'),
+            'filter_flagged'      => get_string('filter_flagged', 'quizaccess_liveproctoring'),
         ],
     ]]
 );
