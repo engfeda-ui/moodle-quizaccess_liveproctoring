@@ -46,11 +46,15 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     /** @type {number} Warning count */
     let warningCount = 0;
 
+    /** @type {boolean} Whether camera stream is currently active */
+    let cameraActive = false;
+
     /** @type {number|null} Snapshot interval timer */
     let snapTimer = null;
 
-    /** @type {boolean} Whether camera is active */
-    let cameraActive = false;
+    /** @type {number|null} Reconnect countdown timer */
+    let reconnectTimer = null;
+    let reconnectSeconds = 15;
 
     /**
      * Initialise the student proctoring module.
@@ -61,13 +65,131 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         cfg = config;
 
         setupTabSwitch();
-        requestCamera();
+        showCameraGate(false);
+    };
+
+    /**
+     * Display a full-screen unclosable camera gate modal.
+     *
+     * @param {boolean} isReconnect Whether this is due to mid-exam camera loss.
+     */
+    const showCameraGate = function(isReconnect) {
+        let gate = document.getElementById('lp-camera-gate');
+        if (gate) {
+            gate.remove();
+        }
+
+        gate = document.createElement('div');
+        gate.id = 'lp-camera-gate';
+        gate.style.cssText = [
+            'position:fixed',
+            'top:0',
+            'left:0',
+            'width:100vw',
+            'height:100vh',
+            'background:#0d1117',
+            'z-index:9999999',
+            'display:flex',
+            'align-items:center',
+            'justify-content:center',
+            'padding:20px',
+            'box-sizing:border-box',
+            'font-family:system-ui,-apple-system,sans-serif',
+        ].join(';');
+
+        const title = isReconnect
+            ? (cfg.strings.cameragate_lost || 'Camera feed disconnected!')
+            : (cfg.strings.cameragate_title || 'Webcam Proctoring Required');
+
+        const desc = isReconnect
+            ? 'تم إيقاف الامتحان مؤقتاً بسبب انقطاع بث الكاميرا. يرجى إعادة تفعيل الكاميرا فوراً قبل انتهاء الوقت المتبقي وإلا سيتم إخراجك من الامتحان وتسليمه تلقائياً.'
+            : (cfg.strings.cameragate_desc || 'This exam requires an active webcam. Questions remain blocked until camera access is granted.');
+
+        const btnText = isReconnect
+            ? '🔄 إعادة تفعيل الكاميرا ومتابعة الحل'
+            : (cfg.strings.cameragate_btn || 'Enable Camera & Enter Exam');
+
+        gate.innerHTML = `
+            <div style="max-width:480px;width:100%;background:#161b22;border:1px solid ${isReconnect ? '#da3633' : '#30363d'};border-radius:16px;padding:32px 24px;text-align:center;box-shadow:0 16px 40px rgba(0,0,0,0.6);color:#f0f6fc;">
+                <div style="font-size:48px;margin-bottom:12px;">${isReconnect ? '🚨' : '📷'}</div>
+                <h2 style="font-size:20px;font-weight:bold;margin:0 0 12px;color:${isReconnect ? '#f85149' : '#f0f6fc'};">${title}</h2>
+                <p style="color:#8b949e;font-size:14px;line-height:1.6;margin:0 0 20px;">${desc}</p>
+                ${isReconnect ? `
+                    <div style="background:rgba(218,54,51,0.15);border:1px solid #da3633;border-radius:8px;padding:10px;margin-bottom:20px;color:#f85149;font-weight:bold;font-size:15px;">
+                        ⏰ الوقت المتبقي: <span id="lp-countdown">15</span> ثانية قبل الإخراج التلقائي
+                    </div>
+                ` : ''}
+                <button id="lp-gate-btn" style="background:#238636;color:#fff;border:none;padding:12px 24px;font-size:15px;font-weight:bold;border-radius:8px;cursor:pointer;width:100%;transition:background 0.2s;">
+                    ${btnText}
+                </button>
+                <div id="lp-gate-error" style="display:none;margin-top:16px;color:#f85149;font-size:13px;line-height:1.5;background:rgba(248,81,73,0.1);padding:10px;border-radius:6px;border:1px solid #da3633;"></div>
+            </div>
+        `;
+
+        document.body.appendChild(gate);
+
+        if (isReconnect) {
+            reconnectSeconds = 15;
+            if (reconnectTimer) {
+                clearInterval(reconnectTimer);
+            }
+            reconnectTimer = setInterval(function() {
+                reconnectSeconds--;
+                const cdElem = document.getElementById('lp-countdown');
+                if (cdElem) {
+                    cdElem.textContent = reconnectSeconds;
+                }
+                if (reconnectSeconds <= 0) {
+                    clearInterval(reconnectTimer);
+                    autoSubmitAttempt();
+                }
+            }, 1000);
+        }
+
+        document.getElementById('lp-gate-btn').addEventListener('click', function() {
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = '⏳ جارٍ الاتصال بالكاميرا...';
+            requestCamera(isReconnect);
+        });
+    };
+
+    /**
+     * Show an error inside the gate modal.
+     */
+    const showGateError = function(msg) {
+        const errDiv = document.getElementById('lp-gate-error');
+        const btn = document.getElementById('lp-gate-btn');
+        if (errDiv) {
+            errDiv.style.display = 'block';
+            errDiv.textContent = msg;
+        }
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = cfg.strings.cameragate_retry || '🔄 إعادة المحاولة والسماح بالكاميرا';
+        }
+    };
+
+    /**
+     * Handle sudden camera loss during exam.
+     */
+    const handleCameraLost = function() {
+        if (!cameraActive) {
+            return;
+        }
+        cameraActive = false;
+        logEvent('camera_blocked', 'high');
+        showCameraGate(true);
     };
 
     /**
      * Create floating video preview widget and hidden canvas.
      */
     const setupVideoElements = function() {
+        if (document.getElementById('lp-student-preview')) {
+            return;
+        }
+
         // Add pulse animation CSS once.
         if (!document.getElementById('lp-style-pulse')) {
             const style = document.createElement('style');
@@ -128,16 +250,18 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         previewWrap.appendChild(video);
         document.body.appendChild(previewWrap);
 
-        canvas = document.createElement('canvas');
-        canvas.style.display = 'none';
-        document.body.appendChild(canvas);
+        if (!canvas) {
+            canvas = document.createElement('canvas');
+            canvas.style.display = 'none';
+            document.body.appendChild(canvas);
+        }
     };
 
     /**
      * Inject transparent watermark with student name.
      */
     const injectWatermark = function() {
-        if (!cfg.showwatermark) {
+        if (!cfg.showwatermark || document.getElementById('lp-watermark')) {
             return;
         }
         const wm = document.createElement('div');
@@ -162,12 +286,12 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
     /**
      * Request camera access from browser.
+     *
+     * @param {boolean} isReconnect
      */
-    const requestCamera = function() {
+    const requestCamera = function(isReconnect) {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            setupVideoElements();
-            injectWatermark();
-            showWarning(cfg.strings.camerablocked);
+            showGateError(cfg.strings.camerablocked || 'Webcam API not supported in this browser.');
             return;
         }
 
@@ -181,6 +305,18 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             stream = mediaStream;
             cameraActive = true;
 
+            // Stop any reconnection countdown.
+            if (reconnectTimer) {
+                clearInterval(reconnectTimer);
+                reconnectTimer = null;
+            }
+
+            // Remove full-screen camera barrier!
+            const gate = document.getElementById('lp-camera-gate');
+            if (gate) {
+                gate.remove();
+            }
+
             // Mount UI overlays only AFTER camera permission dialog has finished.
             setupVideoElements();
             injectWatermark();
@@ -188,28 +324,22 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             if (video) {
                 video.srcObject = mediaStream;
             }
-            const badge = document.getElementById('lp-preview-badge');
-            if (badge) {
-                badge.style.color = '#2ecc71';
-                badge.innerHTML = '<span style="display:inline-block;width:6px;height:6px;background:#2ecc71;border-radius:50%;animation:lp-pulse 1.5s infinite;"></span> REC';
+
+            // Monitor video track liveness.
+            const tracks = mediaStream.getVideoTracks();
+            if (tracks.length > 0) {
+                tracks[0].onended = function() {
+                    handleCameraLost();
+                };
+                tracks[0].onmute = function() {
+                    handleCameraLost();
+                };
             }
+
             startSnapshots();
         }).catch(function() {
             cameraActive = false;
-
-            setupVideoElements();
-            injectWatermark();
-
-            const previewWrap = document.getElementById('lp-student-preview');
-            if (previewWrap) {
-                previewWrap.style.borderColor = '#e74c3c';
-            }
-            const badge = document.getElementById('lp-preview-badge');
-            if (badge) {
-                badge.style.color = '#e74c3c';
-                badge.textContent = '❌ NO CAMERA';
-            }
-            showWarning(cfg.strings.camerablocked);
+            showGateError(cfg.strings.cameragate_denied || 'Camera access was denied.');
             logEvent('camera_blocked', 'high');
         });
     };
@@ -220,10 +350,21 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     const startSnapshots = function() {
         const intervalMs = (cfg.snapshotinterval || 30) * 1000;
 
+        if (snapTimer) {
+            clearInterval(snapTimer);
+        }
+
         // Take first snapshot immediately.
         captureAndPush();
 
-        snapTimer = setInterval(captureAndPush, intervalMs);
+        snapTimer = setInterval(function() {
+            // Check camera stream active.
+            if (!stream || !stream.active || !stream.getVideoTracks().length || stream.getVideoTracks()[0].readyState !== 'live') {
+                handleCameraLost();
+                return;
+            }
+            captureAndPush();
+        }, intervalMs);
     };
 
     /**

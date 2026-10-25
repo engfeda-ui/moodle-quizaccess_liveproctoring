@@ -297,6 +297,7 @@ define([], function() {
                     <div class="lp-card-name">${student.name}</div>
                     <div class="${riskClass} lp-risk-label">${riskLabel}</div>
                     ${risk >= 0 ? `<div class="lp-risk-score">Risk: ${risk}/100</div>` : ''}
+                    ${student.status_msg ? `<div class="lp-status-msg" style="font-size:11px;font-weight:600;margin:3px 0;color:${borderColor};">${student.status_msg}</div>` : ''}
                     ${faceInfo}
                     <div class="lp-lastseen">${cfg.strings.lastseen || 'Last seen'}: ${timeAgo}</div>
                 </div>

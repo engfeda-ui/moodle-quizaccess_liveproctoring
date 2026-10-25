@@ -75,21 +75,82 @@ while ((time() - $starttime) < $maxruntime) {
 
     $rows = $DB->get_records_sql($sql, ['quizid' => $quizid]);
 
+    // Aggregate proctoring events by student for this quiz/cmid.
+    $eventstats = $DB->get_records_sql(
+        "SELECT userid,
+                COUNT(*) AS total_events,
+                SUM(CASE WHEN severity = 'high' THEN 1 ELSE 0 END) AS high_count,
+                SUM(CASE WHEN severity = 'medium' THEN 1 ELSE 0 END) AS med_count,
+                SUM(CASE WHEN eventtype = 'tab_switch' THEN 1 ELSE 0 END) AS tab_count,
+                SUM(CASE WHEN eventtype IN ('camera_blocked', 'camera_denied', 'camera_lost') THEN 1 ELSE 0 END) AS cam_issues,
+                MAX(timecreated) AS last_event_time
+           FROM {quizaccess_liveproctoring_events}
+          WHERE cmid = :cmid
+          GROUP BY userid",
+        ['cmid' => $cmid]
+    );
+
     $students = [];
     foreach ($rows as $row) {
+        $uid = (int) $row->userid;
+        $ev = $eventstats[$uid] ?? null;
+
         $hasthumb = !empty($row->thumbdata);
+        $airisk = isset($row->risk_score) && $row->risk_score >= 0 ? (int) $row->risk_score : 0;
+
+        // Calculate dynamic behavioral risk.
+        $tabcount  = $ev ? (int) $ev->tab_count : 0;
+        $camissues = $ev ? (int) $ev->cam_issues : 0;
+        $highcount = $ev ? (int) $ev->high_count : 0;
+        $medcount  = $ev ? (int) $ev->med_count : 0;
+
+        // 1 tab switch = 35% (Warning), 2 tab switches = 70% (High Risk), camera blocked = 75% (High Risk).
+        $behaviorrisk = ($tabcount * 35) + ($camissues * 75) + ($highcount > 0 ? 20 : 0) + ($medcount * 10);
+        $totalrisk = min(100, max($airisk, $behaviorrisk));
+
+        $issuspicious = ($totalrisk >= 70 || !empty($row->suspicious) || $camissues > 0 || $tabcount >= 2);
+
+        // Status message displayed under risk score.
+        if ($camissues > 0) {
+            $statusmsg = 'الكاميرا محجوبة / مغلقة ❌';
+        } else if ($tabcount > 0) {
+            $statusmsg = "تبديل نافذة ({$tabcount}) ⚠️";
+        } else if (!$hasthumb) {
+            $statusmsg = 'متصل (جارٍ تشغيل الكاميرا...)';
+        } else if (isset($row->face_detected) && $row->face_detected == 0) {
+            $statusmsg = 'الوجه غير ظاهر ⚠️';
+        } else if (isset($row->face_count) && $row->face_count > 1) {
+            $statusmsg = 'أكثر من وجه بالصورة ⚠️';
+        } else {
+            $statusmsg = 'نشط وطبيعي ✅';
+        }
+
+        $lasteventtime = $ev ? (int) $ev->last_event_time : 0;
+        $lastseen = max(!empty($row->snaptime) ? (int) $row->snaptime : 0, (int) $row->timemodified, $lasteventtime);
+
         $students[] = [
-            'userid'       => (int) $row->userid,
+            'userid'       => $uid,
             'name'         => fullname($row) . ' (' . $row->username . ')',
-            'risk_score'   => isset($row->risk_score) ? (int) $row->risk_score : 0,
+            'risk_score'   => $totalrisk,
             'face_detected'=> isset($row->face_detected) ? (bool) $row->face_detected : true,
             'face_count'   => isset($row->face_count) ? (int) $row->face_count : 1,
-            'suspicious'   => !empty($row->suspicious),
+            'suspicious'   => $issuspicious,
             'thumb'        => $row->thumbdata ?? '',
-            'lastseen'     => !empty($row->snaptime) ? (int) $row->snaptime : (int) $row->timemodified,
-            'status_msg'   => !$hasthumb ? 'متصل (جارٍ التقاط الكاميرا...)' : '',
+            'lastseen'     => $lastseen,
+            'status_msg'   => $statusmsg,
         ];
     }
+
+    // Sort students: highest risk / suspicious first.
+    usort($students, function($a, $b) {
+        if ($a['suspicious'] !== $b['suspicious']) {
+            return $b['suspicious'] ? 1 : -1;
+        }
+        if ($a['risk_score'] !== $b['risk_score']) {
+            return $b['risk_score'] <=> $a['risk_score'];
+        }
+        return $b['lastseen'] <=> $a['lastseen'];
+    });
 
     // Get recent high-risk events (last 30 seconds).
     $since = time() - 30;

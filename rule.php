@@ -275,6 +275,12 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
                 'camerablocked'   => get_string('camerablocked', 'quizaccess_liveproctoring'),
                 'autosubmit'      => get_string('autosubmitmessage', 'quizaccess_liveproctoring'),
                 'warningcount'    => get_string('warningcount', 'quizaccess_liveproctoring'),
+                'cameragate_title'  => get_string('cameragate_title', 'quizaccess_liveproctoring'),
+                'cameragate_desc'   => get_string('cameragate_desc', 'quizaccess_liveproctoring'),
+                'cameragate_btn'    => get_string('cameragate_btn', 'quizaccess_liveproctoring'),
+                'cameragate_retry'  => get_string('cameragate_retry', 'quizaccess_liveproctoring'),
+                'cameragate_denied' => get_string('cameragate_denied', 'quizaccess_liveproctoring'),
+                'cameragate_lost'   => get_string('cameragate_lost', 'quizaccess_liveproctoring'),
             ],
         ];
 

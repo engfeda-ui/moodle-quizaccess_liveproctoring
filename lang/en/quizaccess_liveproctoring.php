@@ -55,6 +55,12 @@ $string['warningcount'] = 'Warning';
 $string['camerablocked'] = 'Camera access was denied. Please allow camera access and reload the page to continue the exam.';
 $string['tabswitchwarning'] = 'You switched away from the exam window.';
 $string['autosubmitmessage'] = 'You have exceeded the maximum number of violations. Your exam has been submitted automatically.';
+$string['cameragate_title'] = 'Webcam Proctoring Required';
+$string['cameragate_desc'] = 'This exam requires an active camera. Questions remain completely blocked until camera access is granted.';
+$string['cameragate_btn'] = '📷 Enable Camera & Enter Exam';
+$string['cameragate_retry'] = '🔄 Retry Camera Access';
+$string['cameragate_denied'] = 'Camera access denied! You must allow camera access in browser permissions to take this exam.';
+$string['cameragate_lost'] = 'Camera feed was disconnected! Please restore camera or your exam will be terminated.';
 
 // Teacher dashboard.
 $string['livemonitor'] = 'Live Monitor';

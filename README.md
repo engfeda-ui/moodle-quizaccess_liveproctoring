@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.4-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.5-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,16 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.5 (Build `2026102506`) — 2026-10-25
+- **Full-Screen Camera Hard Gate & Dynamic Behavioral Risk Scoring:**
+  - **Full-Screen Unclosable Camera Gate (`amd/src/proctoring_student.js`)**: Implemented an impenetrable blocking gate (`#lp-camera-gate`, `z-index: 9999999`) completely covering all quiz questions until the student explicitly clicks "Enable Camera & Enter Exam" and camera access is granted. Questions cannot be viewed or answered without an active camera.
+  - **Mid-Exam Camera Loss Reconnection & Ejection**: Added continuous video track liveness monitoring (`track.onended`, `track.onmute`, inactive stream). If the student stops or disables the camera mid-exam, the exam immediately locks with a 15-second countdown banner; failure to re-enable the camera automatically terminates and submits the attempt.
+  - **Dynamic Behavioral Risk Calculation (`live_feed.php`)**: Aggregated events from `{quizaccess_liveproctoring_events}` in bulk to dynamically calculate risk:
+    - 1 tab switch -> 35% Risk (Yellow Warning)
+    - 2 tab switches -> 70% Risk (Red High Risk)
+    - Camera blocked / denied -> 75% Risk (Red High Risk)
+  - **Direct Status Badges on Student Cards (`proctoring_monitor.js`)**: Real-time display of behavioral status on student cards (e.g. `تبديل نافذة (1) ⚠️`, `الكاميرا محجوبة / مغلقة ❌`, `الوجه غير ظاهر ⚠️`) ensuring instructors immediately see the exact reason behind elevated risk scores.
 
 ### 🌟 v1.0.4 (Build `2026102505`) — 2026-10-25
 - **Android Screen Overlay & Permission Tapjacking Mitigation:**
