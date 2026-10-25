@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/quiz/accessrule/liveproctoring/db" VERSION="20261025"
+    COMMENT="XMLDB file for Moodle quizaccess_liveproctoring"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <!-- Snapshots taken during exam -->
+    <TABLE NAME="quizaccess_liveproctoring_snaps" COMMENT="Camera snapshots taken during quiz attempts">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="cmid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="quizid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="attemptid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="fileid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="Moodle file id for stored image"/>
+        <FIELD NAME="thumbdata" TYPE="text" NOTNULL="false" COMMENT="Tiny base64 thumbnail for live dashboard"/>
+        <FIELD NAME="ai_result" TYPE="text" NOTNULL="false" COMMENT="JSON response from AI API"/>
+        <FIELD NAME="risk_score" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="-1" COMMENT="-1=not analyzed, 0-100=risk level"/>
+        <FIELD NAME="face_detected" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="face_count" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="suspicious" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="userid_cmid_attempt" UNIQUE="false" FIELDS="userid, cmid, attemptid"/>
+        <INDEX NAME="timecreated" UNIQUE="false" FIELDS="timecreated"/>
+        <INDEX NAME="risk_score" UNIQUE="false" FIELDS="risk_score"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- Events and warnings log -->
+    <TABLE NAME="quizaccess_liveproctoring_events" COMMENT="Proctoring events and warnings during quiz">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="cmid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="attemptid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="eventtype" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="" COMMENT="tab_switch|face_missing|multi_face|gaze_away|camera_blocked|ai_alert"/>
+        <FIELD NAME="severity" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="low" COMMENT="low|medium|high"/>
+        <FIELD NAME="warningcount" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" COMMENT="Warning number at time of event"/>
+        <FIELD NAME="message" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="userid_cmid" UNIQUE="false" FIELDS="userid, cmid"/>
+        <INDEX NAME="attemptid" UNIQUE="false" FIELDS="attemptid"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- Per-quiz proctoring settings -->
+    <TABLE NAME="quizaccess_liveproctoring_quiz" COMMENT="Per-quiz proctoring configuration">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="quizid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="enablecamera" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="enableai" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="snapshotinterval" TYPE="int" LENGTH="5" NOTNULL="true" DEFAULT="30" COMMENT="Seconds between snapshots"/>
+        <FIELD NAME="warninglimit" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="3" COMMENT="Warnings before auto-submit"/>
+        <FIELD NAME="autosubmit" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" COMMENT="Auto-submit on warning limit"/>
+        <FIELD NAME="referencerequired" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" COMMENT="Require reference photo before exam"/>
+        <FIELD NAME="showwatermark" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="blocktabs" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" COMMENT="Warn on tab switch"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="quizid_unique" TYPE="unique" FIELDS="quizid"/>
+      </KEYS>
+    </TABLE>
+
+    <!-- Reference photos (identity verification) -->
+    <TABLE NAME="quizaccess_liveproctoring_refs" COMMENT="Student reference photos for identity verification">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="fileid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="userid_unique" TYPE="unique" FIELDS="userid"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>

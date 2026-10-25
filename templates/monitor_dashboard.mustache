@@ -1,0 +1,55 @@
+{{!
+    Live Monitor Dashboard Template
+    @template quizaccess_liveproctoring/monitor_dashboard
+}}
+<div class="lp-monitor-wrap" dir="ltr">
+
+    <!-- Header Bar -->
+    <div class="lp-monitor-header">
+        <div class="lp-monitor-title">
+            <span class="lp-live-badge">● LIVE</span>
+            🎥 {{#str}}livemonitor, quizaccess_liveproctoring{{/str}}
+            <span class="lp-quiz-name">— {{{quizname}}}</span>
+        </div>
+        <div class="lp-header-actions">
+            <a href="{{{reporturl}}}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                📋 {{#str}}viewreport, quizaccess_liveproctoring{{/str}}
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="lp-stats-bar">
+        <div class="lp-stat-item">
+            <span class="lp-stat-label">{{#str}}activestudents, quizaccess_liveproctoring{{/str}}</span>
+            <span class="lp-stat-value" id="lp-stat-total">—</span>
+        </div>
+        <div class="lp-stat-item">
+            <span class="lp-stat-label">{{#str}}suspicious, quizaccess_liveproctoring{{/str}}</span>
+            <span class="lp-stat-value" id="lp-stat-suspicious">0</span>
+        </div>
+        <div class="lp-stat-item">
+            <span class="lp-stat-label">{{#str}}lastupdate, quizaccess_liveproctoring{{/str}}</span>
+            <span class="lp-stat-value" id="lp-stat-lastupdate">—</span>
+        </div>
+    </div>
+
+    <!-- Alert Banner (hidden by default) -->
+    <div class="lp-alert-banner" id="lp-alert-banner" style="display:none"></div>
+
+    <!-- Risk Legend -->
+    <div class="lp-legend">
+        <span class="lp-legend-item lp-risk-high">🔴 {{#str}}riskhigh, quizaccess_liveproctoring{{/str}} (≥70)</span>
+        <span class="lp-legend-item lp-risk-medium">🟡 {{#str}}riskmedium, quizaccess_liveproctoring{{/str}} (40–69)</span>
+        <span class="lp-legend-item lp-risk-ok">🟢 {{#str}}riskok, quizaccess_liveproctoring{{/str}} (&lt;40)</span>
+    </div>
+
+    <!-- Student Grid -->
+    <div class="lp-student-grid" id="lp-student-grid">
+        <div class="lp-connecting">
+            <div class="lp-spinner"></div>
+            {{#str}}connecting, quizaccess_liveproctoring{{/str}}
+        </div>
+    </div>
+
+</div>
