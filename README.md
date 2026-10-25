@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.7-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.8-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,12 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.8 (Build `2026102509`) — 2026-10-25
+- **OpenCode Multi-Agent Advisory Hardening & Scalability Suite:**
+  - **Cross-Quiz IDOR Defense (`report.php`)**: Enforced strict binding validation `(int) $cm->instance === (int) $quiz->id` and target student record validation, preventing cross-quiz unauthorized snapshot disclosure.
+  - **Database Index Optimization (`db/install.xml` & `db/upgrade.php`)**: Added composite indexes `idx_snaps_quiz_user (quizid, userid)` on `{quizaccess_liveproctoring_snaps}` and `idx_events_cmid_time (cmid, timecreated)` on `{quizaccess_liveproctoring_events}`, eliminating slow table scans and reducing dashboard query time from O(n²) to O(log n).
+  - **Zero-Accumulation Memory Management (`live_feed.php`)**: Added explicit deallocation (`unset`) of per-loop result sets and active `gc_collect_cycles()` invocation, ensuring flat memory consumption during extended 300s SSE streaming sessions.
 
 ### 🌟 v1.0.7 (Build `2026102508`) — 2026-10-25
 - **PHP Session Lock Release & Live Hall Active Attempt Filtering:**

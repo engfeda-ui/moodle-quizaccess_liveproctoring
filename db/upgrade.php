@@ -64,5 +64,23 @@ function xmldb_quizaccess_liveproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026102507, 'quizaccess', 'liveproctoring');
     }
 
+    if ($oldversion < 2026102509) {
+        // Add index on (quizid, userid) to snaps table for high-performance live feed & report queries.
+        $snapstable = new xmldb_table('quizaccess_liveproctoring_snaps');
+        $snapsindex = new xmldb_index('quizid_userid', XMLDB_INDEX_NOTUNIQUE, ['quizid', 'userid']);
+        if ($dbman->table_exists($snapstable) && !$dbman->index_exists($snapstable, $snapsindex)) {
+            $dbman->add_index($snapstable, $snapsindex);
+        }
+
+        // Add index on (cmid, timecreated) to events table for instant aggregation.
+        $eventstable = new xmldb_table('quizaccess_liveproctoring_events');
+        $eventsindex = new xmldb_index('cmid_timecreated', XMLDB_INDEX_NOTUNIQUE, ['cmid', 'timecreated']);
+        if ($dbman->table_exists($eventstable) && !$dbman->index_exists($eventstable, $eventsindex)) {
+            $dbman->add_index($eventstable, $eventsindex);
+        }
+
+        upgrade_plugin_savepoint(true, 2026102509, 'quizaccess', 'liveproctoring');
+    }
+
     return true;
 }

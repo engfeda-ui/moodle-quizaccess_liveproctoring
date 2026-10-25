@@ -203,6 +203,10 @@ while ((time() - $starttime) < $maxruntime) {
     echo "data: {$payload}\n\n";
     flush();
 
+    // Deallocate result sets and trigger garbage collection to ensure flat memory footprint.
+    unset($rows, $eventstats, $recentalerts, $students, $alertlist, $payload);
+    gc_collect_cycles();
+
     sleep($interval);
 
     // Check if client disconnected.

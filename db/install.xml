@@ -27,6 +27,7 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="userid_cmid_attempt" UNIQUE="false" FIELDS="userid, cmid, attemptid"/>
+        <INDEX NAME="quizid_userid" UNIQUE="false" FIELDS="quizid, userid"/>
         <INDEX NAME="timecreated" UNIQUE="false" FIELDS="timecreated"/>
         <INDEX NAME="risk_score" UNIQUE="false" FIELDS="risk_score"/>
       </INDEXES>
@@ -50,6 +51,7 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="userid_cmid" UNIQUE="false" FIELDS="userid, cmid"/>
+        <INDEX NAME="cmid_timecreated" UNIQUE="false" FIELDS="cmid, timecreated"/>
         <INDEX NAME="attemptid" UNIQUE="false" FIELDS="attemptid"/>
       </INDEXES>
     </TABLE>

@@ -28,6 +28,9 @@ $context = context_module::instance($cmid, MUST_EXIST);
 require_capability('quizaccess/liveproctoring:viewsnapshots', $context);
 
 $quiz = $DB->get_record('quiz', ['id' => $quizid], '*', MUST_EXIST);
+if ((int) $cm->instance !== (int) $quiz->id) {
+    throw new moodle_exception('invalidcoursemodule');
+}
 
 $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/liveproctoring/report.php',
     ['cmid' => $cmid, 'quizid' => $quizid]));
@@ -102,12 +105,14 @@ echo html_writer::end_tag('table');
 
 // Detail view for a specific student.
 if ($userid > 0) {
-    $snaps = $DB->get_records('quizaccess_liveproctoring_snaps',
-        ['quizid' => $quizid, 'userid' => $userid],
-        'timecreated ASC'
-    );
+    $targetuser = $DB->get_record('user', ['id' => $userid]);
+    if ($targetuser) {
+        $snaps = $DB->get_records('quizaccess_liveproctoring_snaps',
+            ['quizid' => $quizid, 'userid' => $userid],
+            'timecreated ASC'
+        );
 
-    echo $OUTPUT->heading(fullname($DB->get_record('user', ['id' => $userid])) . ' — Snapshots', 3);
+        echo $OUTPUT->heading(fullname($targetuser) . ' — Snapshots', 3);
 
     echo html_writer::start_tag('div', ['class' => 'd-flex flex-wrap gap-3 mt-3']);
     foreach ($snaps as $snap) {
@@ -133,7 +138,8 @@ if ($userid > 0) {
             ['class' => 'text-center']
         );
     }
-    echo html_writer::end_tag('div');
+        echo html_writer::end_tag('div');
+    }
 }
 
 echo $OUTPUT->footer();
