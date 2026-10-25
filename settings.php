@@ -50,12 +50,21 @@ if ($hassiteconfig) {
         PARAM_TEXT
     ));
 
+    // AI Model ID (for OpenAI / OpenRouter endpoints).
+    $settings->add(new admin_setting_configtext(
+        'quizaccess_liveproctoring/ai_model',
+        get_string('setting:aimodel', 'quizaccess_liveproctoring'),
+        get_string('setting:aimodeldesc', 'quizaccess_liveproctoring'),
+        'openrouter/free',
+        PARAM_TEXT
+    ));
+
     // AI timeout.
     $settings->add(new admin_setting_configtext(
         'quizaccess_liveproctoring/ai_timeout',
         get_string('setting:aitimeout', 'quizaccess_liveproctoring'),
         get_string('setting:aitimeoutdesc', 'quizaccess_liveproctoring'),
-        10,
+        15,
         PARAM_INT
     ));
 }

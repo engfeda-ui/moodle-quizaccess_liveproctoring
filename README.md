@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.0-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.1-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,17 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.1 (Build `2026102502`) — 2026-10-25
+- **OpenCode & OpenRouter Multimodal Vision Integration:**
+  - Added dual API mode in `ai_analyzer.php`: supports OpenAI/OpenRouter vision endpoints (`/chat/completions`) and legacy flat JSON endpoints.
+  - Added configurable `ai_model` setting with default `openrouter/free` (multimodal auto-router).
+  - Configured live API credentials on production LMS server and verified live webcam frame analysis from within `moodle-app`.
+- **Harness Engineering & Multi-Agent Quality Gates:**
+  - Added `tests/i18n_parity_test.php` verifying 100% string parity between EN and AR (56/56 keys green).
+  - Added `tests/security_audit_test.php` scanning IDOR, CSRF tokens, teacher capability boundaries, and parameter types.
+  - Added `classes/privacy/provider.php` for GDPR compliance.
+  - Updated OpenCode multi-agent advisory matrix in `AGENTS.md` and `SKILL.md` following real-time catalog health audit.
 
 ### 🌟 v1.0.0 (Build `2026102501`) — 2026-10-25
 - Initial production release combining best-of-breed proctoring mechanics:

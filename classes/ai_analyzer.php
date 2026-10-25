@@ -17,8 +17,8 @@
 /**
  * AI Analyzer class for quizaccess_liveproctoring.
  *
- * Sends captured snapshot to a configurable Custom AI API and returns
- * structured analysis results.
+ * Sends captured snapshot to a configurable Custom AI API or OpenAI/OpenRouter
+ * compatible Vision endpoint and returns structured analysis results.
  *
  * @package   quizaccess_liveproctoring
  * @copyright 2026 Energy & Water Academy
@@ -30,7 +30,7 @@ namespace quizaccess_liveproctoring;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Sends images to a custom AI API for proctoring analysis.
+ * Sends images to a custom AI API or OpenAI-compatible vision model.
  */
 class ai_analyzer {
 
@@ -39,6 +39,9 @@ class ai_analyzer {
 
     /** @var string API key / bearer token */
     private string $apikey;
+
+    /** @var string Model name for OpenAI/OpenRouter endpoints */
+    private string $aimodel;
 
     /** @var int Request timeout in seconds */
     private int $timeout;
@@ -49,7 +52,8 @@ class ai_analyzer {
     public function __construct() {
         $this->apiurl  = (string) get_config('quizaccess_liveproctoring', 'ai_api_url');
         $this->apikey  = (string) get_config('quizaccess_liveproctoring', 'ai_api_key');
-        $this->timeout = (int) (get_config('quizaccess_liveproctoring', 'ai_timeout') ?: 10);
+        $this->aimodel = (string) (get_config('quizaccess_liveproctoring', 'ai_model') ?: 'openrouter/free');
+        $this->timeout = (int) (get_config('quizaccess_liveproctoring', 'ai_timeout') ?: 15);
     }
 
     /**
@@ -62,7 +66,7 @@ class ai_analyzer {
     }
 
     /**
-     * Analyze a base64-encoded image via the custom AI API.
+     * Analyze a base64-encoded image via AI API.
      *
      * @param string $imagedata Base64 image (with or without data URI prefix).
      * @param int    $userid    Moodle user ID.
@@ -80,15 +84,47 @@ class ai_analyzer {
             $imagedata = preg_replace('/^data:[^;]+;base64,/', '', $imagedata);
         }
 
-        $payload = json_encode([
-            'image_base64' => 'data:image/jpeg;base64,' . $imagedata,
-            'student_id'   => $userid,
-            'attempt_id'   => $attemptid,
-            'metadata'     => [
-                'quiz_id'   => $quizid,
-                'timestamp' => time(),
-            ],
-        ]);
+        $isopenai = (strpos($this->apiurl, 'chat/completions') !== false ||
+                     strpos($this->apiurl, 'openrouter') !== false ||
+                     strpos($this->apiurl, 'openai') !== false);
+
+        if ($isopenai) {
+            $prompt = 'You are an automated exam proctoring AI. Analyze this webcam snapshot of a student taking an exam. ' .
+                      'Return ONLY a valid JSON object with keys: ' .
+                      '"face_detected" (boolean), "face_count" (integer), "suspicious" (boolean), ' .
+                      '"risk_score" (integer between 0 and 100), "reason" (short string explaining the evaluation). ' .
+                      'No markdown fences, no conversational text.';
+
+            $payload = json_encode([
+                'model' => $this->aimodel,
+                'messages' => [
+                    [
+                        'role' => 'user',
+                        'content' => [
+                            ['type' => 'text', 'text' => $prompt],
+                            [
+                                'type' => 'image_url',
+                                'image_url' => [
+                                    'url' => 'data:image/jpeg;base64,' . $imagedata,
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                'max_tokens' => 1000,
+            ]);
+        } else {
+            // Flat custom API format.
+            $payload = json_encode([
+                'image_base64' => 'data:image/jpeg;base64,' . $imagedata,
+                'student_id'   => $userid,
+                'attempt_id'   => $attemptid,
+                'metadata'     => [
+                    'quiz_id'   => $quizid,
+                    'timestamp' => time(),
+                ],
+            ]);
+        }
 
         $curl = curl_init();
         curl_setopt_array($curl, [
@@ -119,6 +155,27 @@ class ai_analyzer {
             return $this->default_result('Invalid JSON response');
         }
 
+        if ($isopenai) {
+            $content = $data['choices'][0]['message']['content'] ?? '';
+            if (empty($content) && !empty($data['choices'][0]['message']['reasoning'])) {
+                $content = $data['choices'][0]['message']['reasoning'];
+            }
+
+            // Extract JSON from markdown fence or raw text.
+            if (preg_match('/```(?:json)?\s*(\{.*?\})\s*```/s', $content, $matches)) {
+                $content = $matches[1];
+            } else if (preg_match('/(\{.*?\})/s', $content, $matches)) {
+                $content = $matches[1];
+            }
+
+            $parsed = json_decode($content, true);
+            if (is_array($parsed)) {
+                return $this->normalize($parsed);
+            }
+
+            return $this->default_result('Failed to parse AI vision output: ' . substr($content, 0, 100));
+        }
+
         return $this->normalize($data);
     }
 
@@ -130,14 +187,14 @@ class ai_analyzer {
      */
     private function normalize(array $raw): array {
         return [
-            'face_detected'   => (bool) ($raw['face_detected'] ?? false),
-            'face_count'      => (int)  ($raw['face_count']    ?? 0),
-            'gaze_direction'  => (string) ($raw['gaze_direction'] ?? 'unknown'),
-            'suspicious'      => (bool) ($raw['suspicious']    ?? false),
-            'risk_score'      => min(100, max(0, (int) ($raw['risk_score'] ?? 0))),
-            'flags'           => (array) ($raw['flags']         ?? []),
-            'reason'          => (string) ($raw['reason']       ?? ''),
-            'error'           => null,
+            'face_detected'  => (bool) ($raw['face_detected'] ?? false),
+            'face_count'     => (int)  ($raw['face_count']    ?? 0),
+            'gaze_direction' => (string) ($raw['gaze_direction'] ?? 'unknown'),
+            'suspicious'     => (bool) ($raw['suspicious']    ?? false),
+            'risk_score'     => min(100, max(0, (int) ($raw['risk_score'] ?? 0))),
+            'flags'          => (array) ($raw['flags']         ?? []),
+            'reason'         => (string) ($raw['reason']       ?? ''),
+            'error'          => null,
         ];
     }
 
