@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.2-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.3-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,14 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.3 (Build `2026102504`) — 2026-10-25
+- **Production Minified AMD Build & Floating Webcam Preview:**
+  - **AMD Asset Compilation (`amd/build/*.min.js`)**: Compiled minified assets `proctoring_student.min.js` and `proctoring_monitor.min.js` with sourcemaps using Terser, fixing Moodle production RequireJS 404 script loading failures.
+  - **Floating Student Webcam Preview Box**: Integrated a responsive, non-intrusive floating camera box in the corner of the student's exam interface with a pulsing `● REC` badge and live mirror preview.
+  - **Live Monitor In-Progress Attempt Streaming**: Refactored `live_feed.php` to immediately stream all active `inprogress` attempts from `{quiz_attempts}` (with `LEFT JOIN` on snapshots), eliminating empty monitor screens while students initialize.
+  - **Clean Empty State & Card Removal**: Updated `proctoring_monitor.js` with a friendly "waiting for students" empty state and automated removal of cards when attempts finish.
+  - **Pre-Attempt Styled Notice**: Enhanced student exam entry warning with an official styled notice card on `view.php`.
 
 ### 🌟 v1.0.2 (Build `2026102503`) — 2026-10-25
 - **Moodle 4.4+ Access Manager SQL & Namespace Compatibility Hotfix:**

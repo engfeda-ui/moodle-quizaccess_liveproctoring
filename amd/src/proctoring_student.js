@@ -67,14 +67,68 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     };
 
     /**
-     * Create hidden video and canvas elements.
+     * Create floating video preview widget and hidden canvas.
      */
     const setupVideoElements = function() {
+        // Add pulse animation CSS once.
+        if (!document.getElementById('lp-style-pulse')) {
+            const style = document.createElement('style');
+            style.id = 'lp-style-pulse';
+            style.textContent = `
+                @keyframes lp-pulse {
+                    0% { transform: scale(0.95); opacity: 0.8; }
+                    50% { transform: scale(1.2); opacity: 1; }
+                    100% { transform: scale(0.95); opacity: 0.8; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        const previewWrap = document.createElement('div');
+        previewWrap.id = 'lp-student-preview';
+        previewWrap.style.cssText = [
+            'position:fixed',
+            'bottom:16px',
+            'right:16px',
+            'width:160px',
+            'height:120px',
+            'border-radius:12px',
+            'overflow:hidden',
+            'box-shadow:0 6px 20px rgba(0,0,0,0.35)',
+            'z-index:9998',
+            'border:2px solid #27ae60',
+            'background:#111',
+            'transition:border-color 0.3s ease',
+        ].join(';');
+
+        const badge = document.createElement('div');
+        badge.id = 'lp-preview-badge';
+        badge.style.cssText = [
+            'position:absolute',
+            'top:6px',
+            'left:6px',
+            'background:rgba(0,0,0,0.7)',
+            'color:#2ecc71',
+            'font-size:10px',
+            'font-weight:bold',
+            'padding:2px 6px',
+            'border-radius:6px',
+            'z-index:2',
+            'display:flex',
+            'align-items:center',
+            'gap:4px',
+            'font-family:sans-serif',
+        ].join(';');
+        badge.innerHTML = '<span style="display:inline-block;width:6px;height:6px;background:#2ecc71;border-radius:50%;animation:lp-pulse 1.5s infinite;"></span> REC';
+        previewWrap.appendChild(badge);
+
         video = document.createElement('video');
         video.setAttribute('autoplay', '');
         video.setAttribute('playsinline', '');
-        video.style.cssText = 'position:fixed;opacity:0;pointer-events:none;width:1px;height:1px;';
-        document.body.appendChild(video);
+        video.setAttribute('muted', '');
+        video.style.cssText = 'width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block;';
+        previewWrap.appendChild(video);
+        document.body.appendChild(previewWrap);
 
         canvas = document.createElement('canvas');
         canvas.style.display = 'none';
@@ -127,9 +181,23 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             stream = mediaStream;
             video.srcObject = mediaStream;
             cameraActive = true;
+            const badge = document.getElementById('lp-preview-badge');
+            if (badge) {
+                badge.style.color = '#2ecc71';
+                badge.innerHTML = '<span style="display:inline-block;width:6px;height:6px;background:#2ecc71;border-radius:50%;animation:lp-pulse 1.5s infinite;"></span> REC';
+            }
             startSnapshots();
         }).catch(function() {
             cameraActive = false;
+            const previewWrap = document.getElementById('lp-student-preview');
+            if (previewWrap) {
+                previewWrap.style.borderColor = '#e74c3c';
+            }
+            const badge = document.getElementById('lp-preview-badge');
+            if (badge) {
+                badge.style.color = '#e74c3c';
+                badge.textContent = '❌ NO CAMERA';
+            }
             showWarning(cfg.strings.camerablocked);
             logEvent('camera_blocked', 'high');
         });
@@ -323,13 +391,24 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     };
 
     /**
-     * Extract attempt ID from URL or DOM.
+     * Extract attempt ID from config, URL, or DOM.
      *
-     * @return {string|null}
+     * @return {string|number|null}
      */
     const getAttemptId = function() {
+        if (cfg.attemptid) {
+            return cfg.attemptid;
+        }
         const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('attempt') || null;
+        const fromUrl = urlParams.get('attempt');
+        if (fromUrl) {
+            return fromUrl;
+        }
+        const formInput = document.querySelector('input[name="attempt"]');
+        if (formInput && formInput.value) {
+            return formInput.value;
+        }
+        return null;
     };
 
     return { init };

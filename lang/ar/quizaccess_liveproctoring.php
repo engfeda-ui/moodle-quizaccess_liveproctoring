@@ -69,6 +69,8 @@ $string['riskok'] = 'طبيعي';
 $string['facenotdetected'] = 'لا يوجد وجه';
 $string['multiplefaces'] = 'وجوه متعددة';
 $string['lastseen'] = 'آخر ظهور';
+$string['nostudents'] = 'بانتظار بدء الطلاب للاختبار...';
+$string['nostudentsdesc'] = 'ستظهر كاميرات وحالات الطلاب هنا تلقائياً فور بدء محاولاتهم.';
 
 // الصلاحيات.
 $string['liveproctoring:viewmonitor'] = 'عرض شاشة المراقبة الحية';

@@ -219,7 +219,12 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
             return $html;
         }
 
-        return get_string('studentnotice', 'quizaccess_liveproctoring');
+        $notice  = '<div class="alert alert-warning my-3 p-3 d-flex align-items-center" style="border-left: 4px solid #f39c12; background: #fff8e7;">';
+        $notice .= '<span style="font-size: 26px; margin-right: 12px; margin-left: 4px;">📷</span>';
+        $notice .= '<div><strong>' . get_string('pluginname', 'quizaccess_liveproctoring') . ':</strong><br>';
+        $notice .= get_string('studentnotice', 'quizaccess_liveproctoring') . '</div>';
+        $notice .= '</div>';
+        return $notice;
     }
 
     /**
@@ -244,11 +249,14 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
             return;
         }
 
+        $attemptid = optional_param('attempt', 0, PARAM_INT);
+
         // Pass config to AMD module.
         $config = [
             'cmid'             => $this->quizobj->get_cmid(),
             'quizid'           => $quiz->id,
             'userid'           => $USER->id,
+            'attemptid'        => $attemptid,
             'snapshotinterval' => (int) ($settings->snapshotinterval ?? 30),
             'warninglimit'     => (int) ($settings->warninglimit ?? 3),
             'autosubmit'       => (bool) ($settings->autosubmit ?? false),

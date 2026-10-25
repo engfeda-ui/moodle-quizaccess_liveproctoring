@@ -69,6 +69,8 @@ $string['riskok'] = 'OK';
 $string['facenotdetected'] = 'No face';
 $string['multiplefaces'] = 'Multiple faces';
 $string['lastseen'] = 'Last seen';
+$string['nostudents'] = 'Waiting for students to start...';
+$string['nostudentsdesc'] = 'Active student webcam feeds will appear here automatically once attempts begin.';
 
 // Capabilities.
 $string['liveproctoring:viewmonitor'] = 'View live proctoring monitor';

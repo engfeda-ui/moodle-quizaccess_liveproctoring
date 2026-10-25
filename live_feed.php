@@ -53,34 +53,41 @@ $maxruntime = 300; // Max 5 minutes per connection (client reconnects).
 $starttime  = time();
 
 while ((time() - $starttime) < $maxruntime) {
-    // Load the most recent snapshot per active student in this quiz.
-    $sql = "SELECT s.userid, s.risk_score, s.face_detected, s.face_count,
-                   s.suspicious, s.thumbdata, s.timecreated,
-                   u.firstname, u.lastname, u.username
-              FROM {quizaccess_liveproctoring_snaps} s
-              JOIN {user} u ON u.id = s.userid
-             WHERE s.quizid = :quizid
-               AND s.id IN (
+    // Query all active inprogress attempts for this quiz with their latest snapshot.
+    $sql = "SELECT qa.userid, qa.id AS attemptid, qa.timestart, qa.timemodified,
+                   u.firstname, u.lastname, u.username,
+                   s.risk_score, s.face_detected, s.face_count,
+                   s.suspicious, s.thumbdata, s.timecreated AS snaptime
+              FROM {quiz_attempts} qa
+              JOIN {user} u ON u.id = qa.userid
+         LEFT JOIN {quizaccess_liveproctoring_snaps} s
+                ON s.quizid = qa.quiz
+               AND s.userid = qa.userid
+               AND s.id = (
                        SELECT MAX(s2.id)
                          FROM {quizaccess_liveproctoring_snaps} s2
-                        WHERE s2.quizid = :quizid2
-                        GROUP BY s2.userid
+                        WHERE s2.quizid = qa.quiz
+                          AND s2.userid = qa.userid
                    )
-          ORDER BY s.risk_score DESC";
+             WHERE qa.quiz = :quizid
+               AND qa.state = 'inprogress'
+          ORDER BY COALESCE(s.risk_score, 0) DESC, qa.timemodified DESC";
 
-    $rows = $DB->get_records_sql($sql, ['quizid' => $quizid, 'quizid2' => $quizid]);
+    $rows = $DB->get_records_sql($sql, ['quizid' => $quizid]);
 
     $students = [];
     foreach ($rows as $row) {
+        $hasthumb = !empty($row->thumbdata);
         $students[] = [
             'userid'       => (int) $row->userid,
-            'name'         => fullname($row),
-            'risk_score'   => (int) $row->risk_score,
-            'face_detected'=> (bool) $row->face_detected,
-            'face_count'   => (int) $row->face_count,
-            'suspicious'   => (bool) $row->suspicious,
+            'name'         => fullname($row) . ' (' . $row->username . ')',
+            'risk_score'   => isset($row->risk_score) ? (int) $row->risk_score : 0,
+            'face_detected'=> isset($row->face_detected) ? (bool) $row->face_detected : true,
+            'face_count'   => isset($row->face_count) ? (int) $row->face_count : 1,
+            'suspicious'   => !empty($row->suspicious),
             'thumb'        => $row->thumbdata ?? '',
-            'lastseen'     => (int) $row->timecreated,
+            'lastseen'     => !empty($row->snaptime) ? (int) $row->snaptime : (int) $row->timemodified,
+            'status_msg'   => !$hasthumb ? 'متصل (جارٍ التقاط الكاميرا...)' : '',
         ];
     }
 

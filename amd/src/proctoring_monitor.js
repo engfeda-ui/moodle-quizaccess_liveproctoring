@@ -182,6 +182,39 @@ define([], function() {
             return;
         }
 
+        // Always remove the initial connecting indicator.
+        const connecting = grid.querySelector('.lp-connecting');
+        if (connecting) {
+            connecting.remove();
+        }
+
+        if (!students || students.length === 0) {
+            if (!grid.querySelector('.lp-empty-state')) {
+                grid.innerHTML = `
+                    <div class="lp-empty-state" style="grid-column:1/-1;text-align:center;padding:48px 16px;color:#8892b0;">
+                        <div style="font-size:42px;margin-bottom:12px;">⏳</div>
+                        <h4 style="color:#ccd6f6;margin-bottom:8px;">${cfg.strings.nostudents || 'Waiting for students...'}</h4>
+                        <p style="font-size:14px;color:#8892b0;">${cfg.strings.nostudentsdesc || 'Active student cameras will appear here automatically.'}</p>
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        const emptyState = grid.querySelector('.lp-empty-state');
+        if (emptyState) {
+            emptyState.remove();
+        }
+
+        // Track active user IDs to remove finished/left students.
+        const activeIds = new Set(students.map(s => String(s.userid)));
+        grid.querySelectorAll('.lp-student-card').forEach(function(card) {
+            const uid = card.id.replace('lp-card-', '');
+            if (!activeIds.has(uid)) {
+                card.remove();
+            }
+        });
+
         students.forEach(function(student) {
             let card = document.getElementById('lp-card-' + student.userid);
 
@@ -240,9 +273,12 @@ define([], function() {
             borderColor = '#f39c12';
         }
 
-        const thumbHtml = student.thumb
+        const thumbHtml = (student.thumb && student.thumb.length > 50)
             ? `<img src="${student.thumb}" class="lp-thumb" alt="${student.name}" />`
-            : `<div class="lp-thumb-placeholder">📷</div>`;
+            : `<div class="lp-thumb-placeholder" style="height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#16213e;color:#8892b0;border-radius:8px 8px 0 0;">
+                 <span style="font-size:32px;">📷</span>
+                 <small style="margin-top:6px;font-size:11px;">${student.status_msg || 'Connecting camera...'}</small>
+               </div>`;
 
         const faceInfo = student.face_detected
             ? (student.face_count > 1
