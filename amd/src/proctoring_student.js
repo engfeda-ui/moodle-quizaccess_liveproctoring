@@ -60,8 +60,6 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     const init = function(config) {
         cfg = config;
 
-        setupVideoElements();
-        injectWatermark();
         setupTabSwitch();
         requestCamera();
     };
@@ -167,6 +165,8 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
      */
     const requestCamera = function() {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            setupVideoElements();
+            injectWatermark();
             showWarning(cfg.strings.camerablocked);
             return;
         }
@@ -179,8 +179,15 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             },
         }).then(function(mediaStream) {
             stream = mediaStream;
-            video.srcObject = mediaStream;
             cameraActive = true;
+
+            // Mount UI overlays only AFTER camera permission dialog has finished.
+            setupVideoElements();
+            injectWatermark();
+
+            if (video) {
+                video.srcObject = mediaStream;
+            }
             const badge = document.getElementById('lp-preview-badge');
             if (badge) {
                 badge.style.color = '#2ecc71';
@@ -189,6 +196,10 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             startSnapshots();
         }).catch(function() {
             cameraActive = false;
+
+            setupVideoElements();
+            injectWatermark();
+
             const previewWrap = document.getElementById('lp-student-preview');
             if (previewWrap) {
                 previewWrap.style.borderColor = '#e74c3c';

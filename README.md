@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.3-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.4-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,11 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.4 (Build `2026102505`) — 2026-10-25
+- **Android Screen Overlay & Permission Tapjacking Mitigation:**
+  - Deferred HTML overlay and watermark injection until AFTER `getUserMedia()` permission prompt resolution, preventing Android OS tapjacking security block (`يتعذر على الموقع طلب الإذن بسبب التراكمات`).
+  - Added clean DOM state during browser permission requests for zero-friction tablet authorizations.
 
 ### 🌟 v1.0.3 (Build `2026102504`) — 2026-10-25
 - **Production Minified AMD Build & Floating Webcam Preview:**
