@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.6-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.7-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,12 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.7 (Build `2026102508`) — 2026-10-25
+- **PHP Session Lock Release & Live Hall Active Attempt Filtering:**
+  - **Zero-Block PHP Session Write-Close (`live_feed.php`)**: Added immediate `\core\session\manager::write_close();` in the long-running Server-Sent Events (SSE) feed loop. Fixes severe website lag and unblocks concurrent requests (e.g. `report.php`, student quiz navigation, and other LMS tabs) that were previously queued waiting for the 300s SSE session lock to release.
+  - **2-Hour Active Window Exam Hall Filter (`live_feed.php`)**: Added dynamic time boundary (`qa.timemodified >= :activesince OR s.timecreated >= :activesince2`) where `$activesince = time() - (2 * 3600)`. Filters out stale/abandoned `inprogress` attempts from days/weeks ago, ensuring the Live Monitor strictly displays candidates actively engaged in the exam right now.
+  - **Event Aggregation Window Alignment**: Scoped live proctoring events aggregation to the same 2-hour window (`timecreated >= :activesince`), preventing historical warnings on abandoned attempts from polluting current live stats.
 
 ### 🌟 v1.0.6 (Build `2026102507`) — 2026-10-25
 - **Zoom Exam Hall Interface & On-Demand WebRTC Live Spotlight:**

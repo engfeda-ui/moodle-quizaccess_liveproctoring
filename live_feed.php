@@ -38,6 +38,10 @@ require_login($course, true, $cm);
 $context = context_module::instance($cmid, MUST_EXIST);
 require_capability('quizaccess/liveproctoring:viewmonitor', $context);
 
+// CRITICAL: Immediately release the PHP session lock so that long-running SSE streaming
+// does NOT block other requests (like report.php, quiz navigation, or other browser tabs).
+\core\session\manager::write_close();
+
 // SSE headers — disable output buffering.
 header('Content-Type: text/event-stream');
 header('Cache-Control: no-cache');
@@ -53,7 +57,11 @@ $maxruntime = 300; // Max 5 minutes per connection (client reconnects).
 $starttime  = time();
 
 while ((time() - $starttime) < $maxruntime) {
-    // Query all active inprogress attempts for this quiz with their latest snapshot.
+    // In a live exam hall, only show students who are ACTUALLY live/active right now in this exam
+    // (active within the last 2 hours or who pushed a camera snapshot recently).
+    // Stale/abandoned attempts from days ago are excluded from the live meeting.
+    $activesince = time() - (2 * 3600);
+
     $sql = "SELECT qa.userid, qa.id AS attemptid, qa.timestart, qa.timemodified,
                    u.firstname, u.lastname, u.username,
                    s.risk_score, s.face_detected, s.face_count,
@@ -71,11 +79,16 @@ while ((time() - $starttime) < $maxruntime) {
                    )
              WHERE qa.quiz = :quizid
                AND qa.state = 'inprogress'
+               AND (qa.timemodified >= :activesince OR s.timecreated >= :activesince2)
           ORDER BY COALESCE(s.risk_score, 0) DESC, qa.timemodified DESC";
 
-    $rows = $DB->get_records_sql($sql, ['quizid' => $quizid]);
+    $rows = $DB->get_records_sql($sql, [
+        'quizid'       => $quizid,
+        'activesince'  => $activesince,
+        'activesince2' => $activesince,
+    ]);
 
-    // Aggregate proctoring events by student for this quiz/cmid.
+    // Aggregate proctoring events by student for this quiz/cmid (within the same active window).
     $eventstats = $DB->get_records_sql(
         "SELECT userid,
                 COUNT(*) AS total_events,
@@ -86,8 +99,9 @@ while ((time() - $starttime) < $maxruntime) {
                 MAX(timecreated) AS last_event_time
            FROM {quizaccess_liveproctoring_events}
           WHERE cmid = :cmid
+            AND timecreated >= :activesince
           GROUP BY userid",
-        ['cmid' => $cmid]
+        ['cmid' => $cmid, 'activesince' => $activesince]
     );
 
     $students = [];
