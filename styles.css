@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+
 /* ============================================================
    quizaccess_liveproctoring — Main Stylesheet
    ============================================================ */
@@ -52,51 +54,117 @@
     font-family: Arial, sans-serif;
 }
 
-/* ---- Live Monitor Dashboard ---- */
+/* ============================================================
+   SANAD Ecosystem Visual Identity — Zoom Virtual Exam Hall
+   Palette: Terracotta (#C4694A), Navy (#183B56 / #10273B),
+            Gold (#C89B3C), Sage (#5C7268), Cream (#F8F5F0)
+   ============================================================ */
+
+/* ---- Live Monitor Dashboard Root ---- */
 .lp-monitor-wrap {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #0f0f1a;
-    color: #e0e0e0;
+    font-family: "Tajawal", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(ellipse at top, #183B56 0%, #10273B 55%, #0B1C2A 100%);
+    color: #F8F5F0;
     min-height: 100vh;
-    padding: 0;
+    padding: 0 0 90px 0;
 }
 
 /* Header */
 .lp-monitor-header {
-    background: linear-gradient(135deg, #1a1a2e, #16213e);
-    padding: 1rem 1.5rem;
+    background: rgba(16, 39, 59, 0.95);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    padding: 0.9rem 1.6rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 2px solid #0f3460;
+    border-bottom: 2.5px solid #C4694A;
+    box-shadow: 0 4px 20px rgba(11, 28, 42, 0.6);
 }
 
 .lp-monitor-title {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #e0e0e0;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #F8F5F0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.3px;
+}
+
+.lp-brand-badge {
+    background: rgba(196, 105, 74, 0.2);
+    color: #C4694A;
+    border: 1px solid #C4694A;
+    font-size: 0.72rem;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
 }
 
 .lp-quiz-name {
-    font-weight: 400;
-    color: #9ab;
+    font-weight: 500;
+    color: #C89B3C;
 }
 
 .lp-live-badge {
-    display: inline-block;
-    background: #e74c3c;
-    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #C4694A 0%, #A8563B 100%);
+    color: #FFFFFF;
     font-size: 0.75rem;
-    font-weight: 700;
-    padding: 2px 10px;
+    font-weight: 800;
+    padding: 3px 12px;
     border-radius: 20px;
-    margin-right: 0.5rem;
+    box-shadow: 0 0 14px rgba(196, 105, 74, 0.6);
     animation: lp-pulse 2s infinite;
 }
 
 @keyframes lp-pulse {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.6; }
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.65; transform: scale(0.98); }
+}
+
+/* Header Actions Buttons */
+.lp-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lp-header-actions .btn {
+    font-family: "Tajawal", sans-serif;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    transition: all 0.25s ease;
+}
+
+.lp-header-actions .btn-outline-info {
+    color: #C89B3C !important;
+    border: 1.5px solid #C89B3C !important;
+    background: rgba(200, 155, 60, 0.08) !important;
+}
+
+.lp-header-actions .btn-outline-info:hover {
+    background: #C89B3C !important;
+    color: #2C1D13 !important;
+    box-shadow: 0 0 14px rgba(200, 155, 60, 0.45);
+}
+
+.lp-header-actions .btn-outline-secondary {
+    color: #F8F5F0 !important;
+    border: 1.5px solid #5C7268 !important;
+    background: rgba(92, 114, 104, 0.18) !important;
+}
+
+.lp-header-actions .btn-outline-secondary:hover {
+    background: #5C7268 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 14px rgba(92, 114, 104, 0.45);
 }
 
 /* Stats bar */
@@ -104,8 +172,8 @@
     display: flex;
     gap: 2rem;
     padding: 0.75rem 1.5rem;
-    background: #12122a;
-    border-bottom: 1px solid #1e1e3e;
+    background: #142838;
+    border-bottom: 1px solid #23445E;
 }
 
 .lp-stat-item {
@@ -115,75 +183,73 @@
 }
 
 .lp-stat-label {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #7a8ba0;
+    color: #A3B5C5;
+    font-weight: 600;
 }
 
 .lp-stat-value {
     font-size: 1.6rem;
-    font-weight: 700;
-    color: #4fc3f7;
+    font-weight: 800;
+    color: #C89B3C;
 }
 
 .lp-stat-value.lp-risk-high {
-    color: #e74c3c;
+    color: #C4694A;
+    text-shadow: 0 0 10px rgba(196, 105, 74, 0.6);
 }
 
 /* Alert banner */
 .lp-alert-banner {
-    background: #c0392b;
-    color: #fff;
-    font-weight: 700;
-    padding: 0.6rem 1.5rem;
+    background: linear-gradient(135deg, #C4694A 0%, #8D442C 100%);
+    color: #FFFFFF;
+    font-weight: 800;
+    padding: 0.7rem 1.6rem;
     font-size: 1rem;
+    box-shadow: 0 4px 16px rgba(196, 105, 74, 0.4);
     animation: lp-fadein 0.3s ease;
 }
 
-/* Legend */
-.lp-legend {
-    display: flex;
-    gap: 1.5rem;
-    padding: 0.5rem 1.5rem;
-    background: #0d0d20;
-    font-size: 0.8rem;
-    border-bottom: 1px solid #1e1e3e;
-}
-
-.lp-legend-item {
-    font-weight: 600;
-}
-
-/* Student Grid */
+/* Student Gallery Grid */
 .lp-student-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px;
-    padding: 1.2rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 1.5rem;
 }
 
 /* Individual student card */
 .lp-student-card {
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
+    transition: transform 0.25s ease;
 }
 
 .lp-card-inner {
-    border: 3px solid #27ae60;
-    border-radius: 10px;
-    background: #141428;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    border: 2.5px solid #5C7268;
+    border-radius: 12px;
+    background: #142838;
+    box-shadow: 0 8px 24px rgba(11, 28, 42, 0.5);
+    overflow: hidden;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.lp-card-inner:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(11, 28, 42, 0.75);
 }
 
 .lp-card-inner:has(.lp-risk-high) {
-    box-shadow: 0 0 16px rgba(231, 76, 60, 0.5);
+    border-color: #C4694A !important;
+    box-shadow: 0 0 20px rgba(196, 105, 74, 0.65);
     animation: lp-danger-pulse 1.5s infinite;
 }
 
 @keyframes lp-danger-pulse {
-    0%, 100% { box-shadow: 0 0 10px rgba(231,76,60,0.3); }
-    50%       { box-shadow: 0 0 24px rgba(231,76,60,0.8); }
+    0%, 100% { box-shadow: 0 0 10px rgba(196, 105, 74, 0.35); }
+    50%       { box-shadow: 0 0 26px rgba(196, 105, 74, 0.85); }
 }
 
 .lp-thumb {
@@ -196,22 +262,24 @@
 .lp-thumb-placeholder {
     width: 100%;
     aspect-ratio: 4/3;
-    background: #1e1e3e;
+    background: #10273B;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 2.5rem;
-    color: #556;
+    color: #8FA89A;
+    border-bottom: 1px solid #23445E;
 }
 
 .lp-card-info {
-    padding: 0.6rem 0.8rem;
+    padding: 0.75rem 0.9rem;
+    background: #142838;
 }
 
 .lp-card-name {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #c8d8e8;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #F8F5F0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -219,36 +287,37 @@
 }
 
 .lp-risk-label {
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: 0.78rem;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-.lp-risk-high   { color: #e74c3c; }
-.lp-risk-medium { color: #f39c12; }
-.lp-risk-ok     { color: #2ecc71; }
+.lp-risk-high   { color: #C4694A; }
+.lp-risk-medium { color: #C89B3C; }
+.lp-risk-ok     { color: #8FA89A; }
 
 .lp-risk-score {
-    font-size: 0.7rem;
-    color: #7a8ba0;
+    font-size: 0.72rem;
+    color: #A3B5C5;
+    font-weight: 500;
 }
 
 .lp-badge {
     display: inline-block;
-    font-size: 0.65rem;
-    padding: 2px 6px;
+    font-size: 0.68rem;
+    padding: 2px 8px;
     border-radius: 4px;
-    font-weight: 700;
-    margin-top: 3px;
+    font-weight: 800;
+    margin-top: 4px;
 }
 
-.lp-badge-danger  { background: #c0392b; color: #fff; }
-.lp-badge-warning { background: #d35400; color: #fff; }
+.lp-badge-danger  { background: #C4694A; color: #FFFFFF; }
+.lp-badge-warning { background: #C89B3C; color: #2C1D13; }
 
 .lp-lastseen {
-    font-size: 0.65rem;
-    color: #556;
+    font-size: 0.68rem;
+    color: #7A8B9A;
     margin-top: 4px;
 }
 
@@ -261,15 +330,15 @@
     justify-content: center;
     gap: 1rem;
     padding: 3rem;
-    color: #556;
+    color: #A3B5C5;
     font-size: 1rem;
 }
 
 .lp-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #1e1e3e;
-    border-top-color: #4fc3f7;
+    width: 44px;
+    height: 44px;
+    border: 4px solid #23445E;
+    border-top-color: #C4694A;
     border-radius: 50%;
     animation: lp-spin 1s linear infinite;
 }
@@ -279,25 +348,25 @@
 }
 
 /* ============================================================
-   Zoom Exam Hall & Spotlight Modal Styles
+   Zoom Exam Hall Floating Dock & Spotlight Modal
    ============================================================ */
 
 /* Bottom Floating Meeting Dock */
 .lp-meeting-dock {
     position: fixed;
-    bottom: 20px;
+    bottom: 22px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.92);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(16, 39, 59, 0.92);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1.5px solid rgba(196, 105, 74, 0.45);
     border-radius: 40px;
     padding: 8px 24px;
     display: flex;
     align-items: center;
-    gap: 14px;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    gap: 16px;
+    box-shadow: 0 16px 40px rgba(11, 28, 42, 0.75), 0 0 20px rgba(196, 105, 74, 0.2);
     z-index: 1000;
 }
 
@@ -305,68 +374,71 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.85rem;
-    color: #cbd5e1;
-    font-weight: 500;
+    font-size: 0.88rem;
+    color: #F8F5F0;
+    font-weight: 600;
 }
 
 .lp-dock-value {
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: #38bdf8;
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: #C89B3C;
 }
 
 .lp-dock-value.lp-risk-high {
-    color: #f87171;
+    color: #C4694A;
+    text-shadow: 0 0 10px rgba(196, 105, 74, 0.6);
 }
 
 .lp-dock-time {
     font-size: 0.8rem;
-    color: #94a3b8;
+    color: #A3B5C5;
 }
 
 .lp-dock-divider {
     width: 1px;
-    height: 22px;
-    background: rgba(255, 255, 255, 0.15);
+    height: 24px;
+    background: rgba(229, 219, 208, 0.2);
 }
 
 .lp-dock-filters {
     display: flex;
-    gap: 6px;
+    gap: 8px;
 }
 
 .lp-dock-btn {
     background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #cbd5e1;
-    font-size: 0.8rem;
-    font-weight: 600;
-    padding: 6px 14px;
+    border: 1px solid rgba(229, 219, 208, 0.2);
+    color: #E5DBD0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 6px 16px;
     border-radius: 20px;
     cursor: pointer;
     transition: all 0.2s ease;
+    font-family: "Tajawal", sans-serif;
 }
 
 .lp-dock-btn:hover {
-    background: rgba(255, 255, 255, 0.16);
-    color: #fff;
+    background: rgba(196, 105, 74, 0.2);
+    color: #FFFFFF;
+    border-color: #C4694A;
 }
 
 .lp-dock-btn.active {
-    background: #2563eb;
-    border-color: #3b82f6;
-    color: #fff;
-    box-shadow: 0 0 12px rgba(37, 99, 235, 0.5);
+    background: linear-gradient(135deg, #C4694A 0%, #A8563B 100%);
+    border-color: #C4694A;
+    color: #FFFFFF;
+    box-shadow: 0 0 16px rgba(196, 105, 74, 0.6);
 }
 
 /* Spotlight Theatre Modal */
 .lp-spotlight-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(11, 28, 42, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     z-index: 999999;
     display: flex;
     align-items: center;
@@ -376,37 +448,37 @@
 }
 
 .lp-spotlight-dialog {
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: #10273B;
+    border: 2px solid #C4694A;
     border-radius: 16px;
     width: 100%;
-    max-width: 760px;
+    max-width: 780px;
     overflow: hidden;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 25px 60px rgba(11, 28, 42, 0.9), 0 0 30px rgba(196, 105, 74, 0.3);
     display: flex;
     flex-direction: column;
 }
 
 .lp-spotlight-header {
-    background: #1e293b;
-    padding: 12px 20px;
+    background: #183B56;
+    padding: 14px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1.5px solid rgba(196, 105, 74, 0.35);
 }
 
 .lp-spotlight-title {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #f8fafc;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #F8F5F0;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
 .lp-live-dot {
-    color: #ef4444;
+    color: #C4694A;
     font-size: 1.2rem;
     animation: lp-pulse 1.5s infinite;
 }
@@ -414,7 +486,7 @@
 .lp-spotlight-close-btn {
     background: transparent;
     border: none;
-    color: #94a3b8;
+    color: #A3B5C5;
     font-size: 1.3rem;
     cursor: pointer;
     padding: 4px 8px;
@@ -423,14 +495,14 @@
 }
 
 .lp-spotlight-close-btn:hover {
-    color: #f87171;
+    color: #C4694A;
 }
 
 .lp-spotlight-viewport {
     position: relative;
     width: 100%;
-    height: 420px;
-    background: #000;
+    height: 430px;
+    background: #0B1C2A;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -441,30 +513,30 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
-    background: #000;
+    background: #0B1C2A;
 }
 
 .lp-spotlight-badge {
     position: absolute;
     top: 14px;
     left: 14px;
-    background: rgba(0, 0, 0, 0.75);
-    color: #38bdf8;
+    background: rgba(16, 39, 59, 0.88);
+    color: #C89B3C;
     padding: 6px 14px;
     border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    border: 1px solid rgba(56, 189, 248, 0.3);
+    font-size: 0.82rem;
+    font-weight: 700;
+    border: 1px solid rgba(200, 155, 60, 0.5);
     z-index: 5;
 }
 
 .lp-spotlight-controls {
-    background: #1e293b;
-    padding: 14px 20px;
+    background: #142838;
+    padding: 16px 20px;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    border-top: 1px solid #334155;
+    border-top: 1px solid #23445E;
 }
 
 .lp-warning-box {
@@ -474,46 +546,50 @@
 
 .lp-warning-input {
     flex: 1;
-    background: #0f172a;
-    border: 1px solid #475569;
+    background: #0B1C2A;
+    border: 1px solid #23445E;
     border-radius: 8px;
-    padding: 8px 14px;
-    color: #f8fafc;
-    font-size: 0.85rem;
+    padding: 9px 14px;
+    color: #F8F5F0;
+    font-size: 0.88rem;
+    font-family: "Tajawal", sans-serif;
 }
 
 .lp-warning-input:focus {
     outline: none;
-    border-color: #38bdf8;
+    border-color: #C4694A;
+    box-shadow: 0 0 10px rgba(196, 105, 74, 0.35);
 }
 
 .lp-btn-action {
     border: none;
-    padding: 8px 16px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    padding: 9px 18px;
+    font-size: 0.88rem;
+    font-weight: 700;
     border-radius: 8px;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, transform 0.1s;
     white-space: nowrap;
+    font-family: "Tajawal", sans-serif;
 }
 
 .lp-btn-warning {
-    background: #d97706;
-    color: #fff;
+    background: #C89B3C;
+    color: #2C1D13;
 }
 
 .lp-btn-warning:hover {
-    background: #b45309;
+    background: #B2852C;
+    color: #FFFFFF;
 }
 
 .lp-btn-danger {
-    background: #dc2626;
-    color: #fff;
+    background: #C4694A;
+    color: #FFFFFF;
 }
 
 .lp-btn-danger:hover {
-    background: #b91c1c;
+    background: #A8563B;
 }
 
 .lp-terminate-box {
@@ -525,23 +601,26 @@
 .lp-spotlight-trigger {
     width: 100%;
     margin-top: 8px;
-    background: #2563eb;
+    background: linear-gradient(135deg, #C4694A 0%, #A8563B 100%);
     border: none;
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 6px 10px;
-    border-radius: 6px;
+    color: #FFFFFF;
+    font-family: "Tajawal", sans-serif;
+    font-size: 0.8rem;
+    font-weight: 800;
+    padding: 7px 12px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
+    box-shadow: 0 4px 12px rgba(196, 105, 74, 0.35);
 }
 
 .lp-spotlight-trigger:hover {
-    background: #1d4ed8;
+    background: linear-gradient(135deg, #D47B5C 0%, #B8654A 100%);
+    box-shadow: 0 6px 16px rgba(196, 105, 74, 0.55);
     transform: translateY(-1px);
 }
 

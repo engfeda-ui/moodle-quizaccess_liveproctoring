@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.8-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.9-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,16 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.9 (Build `2026102510`) — 2026-10-25
+- **SANAD Visual Identity & Zoom Virtual Hall Theming (`styles.css` & `amd/src/proctoring_monitor.js`):**
+  - **SANAD Brand Palette Integration**: Overhauled the Zoom virtual exam hall with SANAD Academy's visual identity: Deep Executive Navy backdrop (`#183B56`, `#10273B`, `#0B1C2A`), Signature Terracotta branding (`#C4694A` with glow `rgba(196, 105, 74, 0.45)`), Sage Green status tones (`#5C7268`), and Warm Amber warning highlights (`#C89B3C`).
+  - **Tajawal Typography**: Integrated Google Fonts Tajawal with full RTL/LTR hierarchy for crystal-clear readability.
+  - **Frosted Glass Floating Dock**: Upgraded the Zoom bottom controls dock with SANAD terracotta action glows, glassmorphism blur, and animated badge indicators.
+  - **Spotlight Stage & Modal Overhaul**: Re-themed the WebRTC live stage and dialog controls with terracotta accents and sleek navy cards.
+- **GitHub Repository & Automated Moodle Plugin CI (`.github/workflows/ci.yml`):**
+  - Published official GitHub repository under `engfeda-ui/moodle-quizaccess_liveproctoring`.
+  - Configured Moodle Plugin CI workflow testing PHP 8.1, 8.2, and 8.3 across Moodle 4.5 Stable with automated linting, codesniffer, phpdoc, and validation checks.
 
 ### 🌟 v1.0.8 (Build `2026102509`) — 2026-10-25
 - **OpenCode Multi-Agent Advisory Hardening & Scalability Suite:**

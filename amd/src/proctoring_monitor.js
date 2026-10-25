@@ -387,16 +387,16 @@ define([], function() {
         const risk = student.risk_score;
         let riskClass = 'lp-risk-ok';
         let riskLabel = cfg.strings.ok || 'OK';
-        let borderColor = '#27ae60';
+        let borderColor = '#5C7268'; // SANAD Sage Green
 
         if (student.suspicious || risk >= 70) {
             riskClass = 'lp-risk-high';
             riskLabel = cfg.strings.high || 'HIGH RISK';
-            borderColor = '#e74c3c';
+            borderColor = '#C4694A'; // SANAD Terracotta
         } else if (risk >= 40) {
             riskClass = 'lp-risk-medium';
             riskLabel = cfg.strings.medium || 'Warning';
-            borderColor = '#f39c12';
+            borderColor = '#C89B3C'; // SANAD Gold
         }
 
         const thumbHtml = (student.thumb && student.thumb.length > 50)
