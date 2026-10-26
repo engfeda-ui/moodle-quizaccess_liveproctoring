@@ -534,13 +534,23 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             <div class="lp-warning-inner">
                 <div class="lp-warning-icon">⚠️</div>
                 <h2>${cfg.strings.warningtitle || 'Warning'}</h2>
-                <p>${message.replace(/\n/g, '<br>')}</p>
+                <p id="lp-warning-text"></p>
                 <button id="lp-dismiss-btn" class="btn btn-warning">
                     OK — I understand
                 </button>
             </div>
         `;
         document.body.appendChild(overlay);
+
+        const textElem = overlay.querySelector('#lp-warning-text');
+        if (textElem && message) {
+            String(message).split('\n').forEach(function(line, idx) {
+                if (idx > 0) {
+                    textElem.appendChild(document.createElement('br'));
+                }
+                textElem.appendChild(document.createTextNode(line));
+            });
+        }
 
         document.getElementById('lp-dismiss-btn').addEventListener('click', function() {
             overlay.remove();

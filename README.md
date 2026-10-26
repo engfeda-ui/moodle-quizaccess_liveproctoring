@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.19-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.20-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,13 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.20 (Build `2026102620`) — 2026-10-26
+- **Critical Production Stability & Security Hardening (Phase 1):**
+  - **Fatal Error Fix in Scheduled Task (`classes/task/analyze_snapshots.php`)**: Resolved delayed fatal error by prefixing global `\stdClass()` inside namespace `quizaccess_liveproctoring\task`.
+  - **Restored Compiled Production AMD Assets (`amd/build/*.min.js`)**: Generated and restored `proctoring_student.min.js` and `proctoring_monitor.min.js`, ensuring Moodle production mode loads AMD modules without 404 errors.
+  - **HTTPS Mixed-Content Prevention (`settings.php`)**: Updated `ws_url` default to empty string (`''`) and sanitized with `PARAM_RAW_TRIMMED` to ensure smooth HTTPS HTTP polling fallback until WSS proxy is configured.
+  - **XSS Defense in Student & Monitor Overlays (`amd/src/proctoring_student.js`, `amd/src/proctoring_monitor.js`)**: Replaced raw `innerHTML` message injection with safe DOM text node insertion in student warning dialogs, and added HTML escaping (`escapeHtml`) for candidate names and status labels in monitor cards.
 
 ### 🌟 v1.0.19 (Build `2026102610`) — 2026-10-26
 - **WebSocket signaling server**: Deployed Node.js relay on production (port 8080).

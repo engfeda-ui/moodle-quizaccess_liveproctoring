@@ -78,7 +78,7 @@ class analyze_snapshots extends \core\task\scheduled_task {
             $DB->update_record('quizaccess_liveproctoring_snaps', $snap);
 
             if (!empty($airesult['suspicious']) || (!empty($airesult['face_detected']) && $airesult['face_count'] > 1)) {
-                $ev = new stdClass();
+                $ev = new \stdClass();
                 $ev->userid       = $snap->userid;
                 $ev->cmid         = $snap->cmid;
                 $ev->attemptid    = $snap->attemptid;

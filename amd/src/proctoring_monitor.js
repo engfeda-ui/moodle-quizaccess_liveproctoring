@@ -422,6 +422,24 @@ define([], function() {
     };
 
     /**
+     * Escape HTML special characters.
+     *
+     * @param {string} str
+     * @return {string}
+     */
+    const escapeHtml = function(str) {
+        if (!str) {
+            return '';
+        }
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    };
+
+    /**
      * Build HTML for a student card.
      */
     const buildCardHTML = function(student) {
@@ -441,10 +459,10 @@ define([], function() {
         }
 
         const thumbHtml = (student.thumb && student.thumb.length > 50)
-            ? `<img src="${student.thumb}" class="lp-thumb" alt="${student.name}" />`
+            ? `<img src="${student.thumb}" class="lp-thumb" alt="${escapeHtml(student.name)}" />`
             : `<div class="lp-thumb-placeholder" style="height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#16213e;color:#8892b0;border-radius:8px 8px 0 0;">
                  <span style="font-size:32px;">📷</span>
-                 <small style="margin-top:6px;font-size:11px;">${student.status_msg || 'Connecting camera...'}</small>
+                 <small style="margin-top:6px;font-size:11px;">${escapeHtml(student.status_msg || 'Connecting camera...')}</small>
                </div>`;
 
         const faceInfo = student.face_detected
@@ -461,10 +479,10 @@ define([], function() {
             <div class="lp-card-inner" style="border-color:${borderColor}">
                 ${thumbHtml}
                 <div class="lp-card-info">
-                    <div class="lp-card-name">${student.name}</div>
+                    <div class="lp-card-name">${escapeHtml(student.name)}</div>
                     <div class="${riskClass} lp-risk-label">${riskLabel}</div>
                     ${risk >= 0 ? `<div class="lp-risk-score">Risk: ${risk}/100</div>` : ''}
-                    ${student.status_msg ? `<div class="lp-status-msg" style="font-size:11px;font-weight:600;margin:3px 0;color:${borderColor};">${student.status_msg}</div>` : ''}
+                    ${student.status_msg ? `<div class="lp-status-msg" style="font-size:11px;font-weight:600;margin:3px 0;color:${borderColor};">${escapeHtml(student.status_msg)}</div>` : ''}
                     ${faceInfo}
                     <div class="lp-lastseen">${cfg.strings.lastseen || 'Last seen'}: ${timeAgo}</div>
                     <button class="lp-spotlight-trigger" data-userid="${student.userid}">
