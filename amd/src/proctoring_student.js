@@ -645,12 +645,18 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         answerApplied = false;
 
         try {
-            peerConnection = new RTCPeerConnection({
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
-                ]
-            });
+            const iceServers = [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+            ];
+            if (cfg.turnurl) {
+                iceServers.push({
+                    urls: cfg.turnurl,
+                    username: cfg.turnusername,
+                    credential: cfg.turnpassword,
+                });
+            }
+            peerConnection = new RTCPeerConnection({ iceServers: iceServers });
 
             if (stream) {
                 stream.getTracks().forEach(function(track) {

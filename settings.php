@@ -67,4 +67,29 @@ if ($hassiteconfig) {
         15,
         PARAM_INT
     ));
+
+    // TURN server URL.
+    $settings->add(new admin_setting_configtext(
+        'quizaccess_liveproctoring/turn_url',
+        'TURN server URL',
+        'TURN/STUN server URL (e.g. turn:150.230.241.37:3478).',
+        'turn:150.230.241.37:3478',
+        PARAM_TEXT
+    ));
+    // TURN username.
+    $settings->add(new admin_setting_configtext(
+        'quizaccess_liveproctoring/turn_username',
+        'TURN username',
+        'Username for TURN authentication.',
+        'lpuser',
+        PARAM_TEXT
+    ));
+    // TURN password.
+    $settings->add(new admin_setting_configpasswordunmask(
+        'quizaccess_liveproctoring/turn_password',
+        'TURN password',
+        'Password for TURN authentication.',
+        'StrongPass123!',
+        PARAM_TEXT
+    ));
 }

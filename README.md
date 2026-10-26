@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.16-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.17-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,11 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.17 (Build `2026102608`) — 2026-10-26
+- **TURN server (coturn)**: Installed & configured on production (150.230.241.37:3478) for reliable NAT traversal.
+- **Plugin settings**: Added TURN URL/username/password (admin settings) wired into WebRTC iceServers (student + monitor).
+- **Video quality**: Best available with TURN (relay) + STUN + 640px/30FPS.
 
 ### 🌟 v1.0.16 (Build `2026102607`) — 2026-10-26
 - **Video quality improvements (Zoom-like):**

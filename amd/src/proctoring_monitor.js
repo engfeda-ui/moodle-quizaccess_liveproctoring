@@ -591,12 +591,18 @@ define([], function() {
      */
     const handleIncomingOffer = function(offerStr, candidatesStr) {
         try {
-            const pc = new RTCPeerConnection({
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
-                ]
-            });
+            const iceServers = [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+            ];
+            if (cfg.turnurl) {
+                iceServers.push({
+                    urls: cfg.turnurl,
+                    username: cfg.turnusername,
+                    credential: cfg.turnpassword,
+                });
+            }
+            const pc = new RTCPeerConnection({ iceServers: iceServers });
 
             activeSpotlight.pc = pc;
 
