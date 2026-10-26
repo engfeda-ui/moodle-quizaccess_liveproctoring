@@ -30,10 +30,14 @@ require_once(__DIR__ . '/../../../../config.php');
 require_once(__DIR__ . '/rule.php');
 
 $cmid   = required_param('cmid',   PARAM_INT);
-$quizid = required_param('quizid', PARAM_INT);
+$quizid = optional_param('quizid', 0, PARAM_INT);
 
 list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
 require_login($course, true, $cm);
+
+if (empty($quizid)) {
+    $quizid = (int) $cm->instance;
+}
 
 $context = context_module::instance($cmid, MUST_EXIST);
 require_capability('quizaccess/liveproctoring:viewmonitor', $context);

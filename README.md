@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.24-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.25-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -99,6 +99,10 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.25 (Build `2026102625`) — 2026-10-26
+- **Seamless URL Resolution & Single-Parameter Navigation:**
+  - **Auto-Resolving Quiz ID from `cmid` (`live_monitor.php`, `report.php`, `live_feed.php`)**: Made `quizid` optional; automatically resolves `$quizid = (int)$cm->instance` from `cmid`. Instructors and administrators can now access the Live Monitor and Post-Exam Reports using only `?cmid=<ID>` without requiring internal quiz IDs or triggering missing parameter exceptions.
 
 ### 🌟 v1.0.24 (Build `2026102624`) — 2026-10-26
 - **Granular Security Controls & Custom Assessment Configuration Suite:**
