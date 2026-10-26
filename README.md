@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.25-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.26-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -99,6 +99,13 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.26 (Build `2026102626`) — 2026-10-26
+- **Pre-Exam Camera & Microphone Verification & Attempt Button Gating:**
+  - **Pre-Exam Device Verification Card on Quiz Intro (`rule.php`, `amd/src/precheck_view.js`)**: Rendered an executive pre-check card on `mod/quiz/view.php` displaying live camera video preview, webcam connection status, microphone status, and single-display hardware verification.
+  - **Attempt Button Gated Until Authorized (`amd/src/precheck_view.js`, `amd/build/precheck_view.min.js`)**: The "Attempt quiz now" button (`.quizstartbuttondiv button`, `#id_submitbutton`) is strictly locked on page load (`disabled`, `opacity: 0.35`, `pointer-events: none`). It cannot be clicked until the candidate grants camera/mic permissions and passes verification. Upon passing, the button unlocks with an active glowing green pulse (`.lp-btn-unlocked`).
+  - **Zero Black Gate Blocking on Exam Start (`amd/src/proctoring_student.js`)**: Replaced initial black blocking screen with seamless background connection. Because permissions were already granted and verified on `view.php`, the exam questions are 100% visible immediately from the very first frame. The black gate overlay is reserved solely as a fallback if the camera is disconnected mid-exam.
+  - **100% Arabic & English Parity**: Added 18 new localized strings across both language packs (124 total keys verified).
 
 ### 🌟 v1.0.25 (Build `2026102625`) — 2026-10-26
 - **Seamless URL Resolution & Single-Parameter Navigation:**

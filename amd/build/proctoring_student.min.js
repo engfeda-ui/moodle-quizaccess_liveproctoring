@@ -88,11 +88,11 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
         const attemptid = getAttemptId();
         const hasSession = attemptid ? sessionStorage.getItem('lp_cam_granted_' + attemptid) : null;
-        if (hasSession) {
-            requestCamera(false);
-        } else {
-            showCameraGate(false);
-        }
+        const hasPrecheck = (sessionStorage.getItem('lp_cam_prechecked_' + cfg.quizid) === '1');
+
+        // Connect camera seamlessly in background without showing black gate.
+        // If permission was not yet granted or fails, requestCamera will trigger the fallback gate.
+        requestCamera(false);
 
         setupSignalHeartbeat();
         connectWS();
@@ -266,6 +266,9 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
      * Show an error inside the gate modal.
      */
     const showGateError = function(msg) {
+        if (!document.getElementById('lp-camera-gate')) {
+            showCameraGate(false);
+        }
         const errDiv = document.getElementById('lp-gate-error');
         const btn = document.getElementById('lp-gate-btn');
         if (errDiv) {

@@ -122,6 +122,26 @@ $string['speaking_detected'] = 'رصد تحدث أو أصوات مرتفعة أ�
 $string['face_disappeared'] = 'اختفاء وجه الطالب من إطار الكاميرا';
 $string['cameramic_required'] = 'الكاميرا والميكروفون إلزاميان تماماً لدخول هذا الامتحان، ولا يُقبل البدء دونهما.';
 
+// التحقق المسبق من الكاميرا والمايك قبل بدء الامتحان.
+$string['precheck_title'] = 'فحص ومطابقة الكاميرا والميكروفون قبل بدء الاختبار';
+$string['precheck_desc'] = 'هذا الاختبار يخضع للمراقبة المرئية الحية والذكاء الاصطناعي. زر (بدء المحاولة الآن) مقفل ولن يتم تفعيله إلا بعد السماح بالكاميرا والمايك أدناه والتحقق من جهازك.';
+$string['precheck_badge'] = 'خاضع للمراقبة الحية والذكاء الاصطناعي';
+$string['precheck_placeholder'] = 'اضغط على الزر أدناه لتفعيل الكاميرا والمايك والتأكد من وضوح صورتك ومطابقة مظهرك.';
+$string['precheck_cam_status'] = 'كاميرا الويب';
+$string['precheck_mic_status'] = 'الميكروفون';
+$string['precheck_screen_status'] = 'شاشة العرض';
+$string['precheck_waiting'] = 'في انتظار الصلاحيات';
+$string['precheck_checking'] = 'جارٍ فحص الجهاز...';
+$string['precheck_cam_ok'] = 'متصلة ومطابقة';
+$string['precheck_mic_ok'] = 'متصل ونشط';
+$string['precheck_screen_ok'] = 'شاشة واحدة معتمدة';
+$string['precheck_btn_verify'] = 'السماح بالكاميرا والمايك لتفعيل زر بدء الاختبار';
+$string['precheck_btn_verifying'] = 'جارٍ الاتصال والتحقق من الجهاز...';
+$string['precheck_btn_verified'] = 'تم التحقق من الكاميرا والجهاز بنجاح';
+$string['precheck_success'] = 'تم التحقق من الكاميرا والميكروفون بنجاح! تم تفعيل زر (بدء المحاولة الآن) أدناه. بالتوفيق في اختبارك!';
+$string['button_locked_hint'] = 'يجب تفعيل الكاميرا والميكروفون في صندوق التحقق بالأعلى أولاً لتفعيل هذا الزر.';
+$string['must_verify_first'] = 'يرجى إكمال فحص الكاميرا والمايك والموافقة عليها بالأعلى أولاً قبل بدء المحاولة!';
+
 // الصلاحيات.
 $string['liveproctoring:viewmonitor'] = 'عرض شاشة المراقبة الحية';
 $string['liveproctoring:viewsnapshots'] = 'عرض لقطات صور الامتحان';

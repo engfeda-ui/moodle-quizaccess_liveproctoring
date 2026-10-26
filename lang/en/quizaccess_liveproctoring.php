@@ -122,6 +122,26 @@ $string['speaking_detected'] = 'Speech or loud conversation detected';
 $string['face_disappeared'] = 'Student face not detected in frame';
 $string['cameramic_required'] = 'Webcam and Microphone access are strictly required to enter this exam.';
 
+// Pre-Exam Device Verification strings.
+$string['precheck_title'] = 'Pre-Exam Camera & Microphone Verification';
+$string['precheck_desc'] = 'This exam requires live camera and microphone proctoring. The (Attempt quiz now) button is locked until you authorize your camera and microphone below.';
+$string['precheck_badge'] = 'Live Proctoring Active';
+$string['precheck_placeholder'] = 'Click the button below to authorize camera & mic and preview your video.';
+$string['precheck_cam_status'] = 'Webcam Device';
+$string['precheck_mic_status'] = 'Microphone Device';
+$string['precheck_screen_status'] = 'Display Screen';
+$string['precheck_waiting'] = 'Waiting for permission';
+$string['precheck_checking'] = 'Verifying hardware...';
+$string['precheck_cam_ok'] = 'Connected & Verified';
+$string['precheck_mic_ok'] = 'Connected & Active';
+$string['precheck_screen_ok'] = 'Single Display Verified';
+$string['precheck_btn_verify'] = 'Authorize Camera & Mic to Enable Attempt Button';
+$string['precheck_btn_verifying'] = 'Connecting & verifying hardware...';
+$string['precheck_btn_verified'] = 'Device & Camera Verified Successfully';
+$string['precheck_success'] = 'Camera & Microphone verified successfully! The (Attempt quiz now) button below is now active. Good luck!';
+$string['button_locked_hint'] = 'You must authorize camera and microphone in the verification box above to unlock this button.';
+$string['must_verify_first'] = 'Please complete the Camera and Microphone pre-check verification before starting the attempt!';
+
 // Capabilities.
 $string['liveproctoring:viewmonitor'] = 'View live proctoring monitor';
 $string['liveproctoring:viewsnapshots'] = 'View exam snapshots';

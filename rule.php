@@ -307,6 +307,8 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
      * @return string HTML formatted information.
      */
     public function description() {
+        global $PAGE;
+
         $context = $this->quizobj->get_context();
         if (has_capability('quizaccess/liveproctoring:viewmonitor', $context)) {
             $cmid   = $this->quizobj->get_cmid();
@@ -328,12 +330,109 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
             return $html;
         }
 
-        $notice  = '<div class="alert alert-warning my-3 p-3 d-flex align-items-center" style="border-left: 4px solid #f39c12; background: #fff8e7;">';
-        $notice .= '<span style="font-size: 26px; margin-right: 12px; margin-left: 4px;">📷</span>';
-        $notice .= '<div><strong>' . get_string('pluginname', 'quizaccess_liveproctoring') . ':</strong><br>';
-        $notice .= get_string('studentnotice', 'quizaccess_liveproctoring') . '</div>';
-        $notice .= '</div>';
-        return $notice;
+        $quizid   = $this->quizobj->get_quizid();
+        $settings = self::get_quiz_proctoring_settings($quizid);
+        if (empty($settings) || empty($settings->enablecamera)) {
+            return '';
+        }
+
+        // Call AMD module to lock Attempt button and handle device verification on view.php.
+        $config = [
+            'quizid'             => (int) $quizid,
+            'cmid'               => (int) $this->quizobj->get_cmid(),
+            'resolution'         => (int) ($settings->resolution ?? 640),
+            'requiremic'         => !isset($settings->requiremic) || !empty($settings->requiremic),
+            'blockvirtualcamera' => !isset($settings->blockvirtualcamera) || !empty($settings->blockvirtualcamera),
+            'blockmultiscreen'   => !isset($settings->blockmultiscreen) || !empty($settings->blockmultiscreen),
+            'strings'            => [
+                'waiting'              => get_string('precheck_waiting', 'quizaccess_liveproctoring'),
+                'checking'             => get_string('precheck_checking', 'quizaccess_liveproctoring'),
+                'cam_ok'               => get_string('precheck_cam_ok', 'quizaccess_liveproctoring'),
+                'mic_ok'               => get_string('precheck_mic_ok', 'quizaccess_liveproctoring'),
+                'screen_ok'            => get_string('precheck_screen_ok', 'quizaccess_liveproctoring'),
+                'btn_verify'           => get_string('precheck_btn_verify', 'quizaccess_liveproctoring'),
+                'btn_verifying'        => get_string('precheck_btn_verifying', 'quizaccess_liveproctoring'),
+                'btn_verified'         => get_string('precheck_btn_verified', 'quizaccess_liveproctoring'),
+                'button_locked_hint'   => get_string('button_locked_hint', 'quizaccess_liveproctoring'),
+                'must_verify_first'    => get_string('must_verify_first', 'quizaccess_liveproctoring'),
+                'virtualcamerablocked' => get_string('virtualcamerablocked', 'quizaccess_liveproctoring', ''),
+                'multimonitorwarning'  => get_string('multimonitorwarning', 'quizaccess_liveproctoring'),
+                'camerablocked'        => get_string('camerablocked', 'quizaccess_liveproctoring'),
+                'cameramic_required'   => get_string('cameramic_required', 'quizaccess_liveproctoring'),
+            ],
+        ];
+
+        $PAGE->requires->js_call_amd('quizaccess_liveproctoring/precheck_view', 'init', [$config]);
+
+        // Build elegant Pre-Exam Verification Card.
+        $html  = '<div id="lp-precheck-card" class="card shadow-sm my-4" style="border: 2px solid #0f3460; border-radius: 14px; overflow: hidden; background: #ffffff;">';
+        $html .= '  <div class="card-header d-flex align-items-center justify-content-between p-3" style="background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%); color: #ffffff;">';
+        $html .= '    <div class="d-flex align-items-center gap-2">';
+        $html .= '      <span style="font-size: 24px;">📷🎙️</span>';
+        $html .= '      <h5 class="mb-0 fw-bold" style="color: #ffffff; font-size: 17px;">' . get_string('precheck_title', 'quizaccess_liveproctoring') . '</h5>';
+        $html .= '    </div>';
+        $html .= '    <span class="badge rounded-pill bg-danger px-3 py-2" style="font-size: 12px; letter-spacing: 0.5px;">' . get_string('precheck_badge', 'quizaccess_liveproctoring') . '</span>';
+        $html .= '  </div>';
+
+        $html .= '  <div class="card-body p-4">';
+        $html .= '    <p class="text-muted mb-3" style="font-size: 14px; line-height: 1.6;">' . get_string('precheck_desc', 'quizaccess_liveproctoring') . '</p>';
+
+        $html .= '    <div class="row align-items-center g-3">';
+        // Video preview box
+        $html .= '      <div class="col-md-5 col-12 d-flex justify-content-center">';
+        $html .= '        <div id="lp-precheck-videowrap" style="width: 240px; height: 180px; border-radius: 12px; background: #161b22; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; text-align: center; border: 2px solid #30363d; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">';
+        $html .= '          <div id="lp-precheck-placeholder" style="color: #8b949e; font-size: 13px; padding: 12px;">';
+        $html .= '            <div style="font-size: 34px; margin-bottom: 6px;">📷</div>';
+        $html .= '            <span>' . get_string('precheck_placeholder', 'quizaccess_liveproctoring') . '</span>';
+        $html .= '          </div>';
+        $html .= '          <video id="lp-precheck-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: none;"></video>';
+        $html .= '          <div id="lp-precheck-livebadge" style="display: none; position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,0.75); color: #2ecc71; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 6px;">● LIVE</div>';
+        $html .= '        </div>';
+        $html .= '      </div>';
+
+        // Status items column
+        $html .= '      <div class="col-md-7 col-12">';
+        $html .= '        <div class="p-3 rounded" style="background: #f8f9fa; border: 1px solid #e9ecef;">';
+        $html .= '          <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">';
+        $html .= '            <span class="fw-semibold" style="font-size: 14px;">📹 ' . get_string('precheck_cam_status', 'quizaccess_liveproctoring') . '</span>';
+        $html .= '            <span id="lp-status-cam" class="badge bg-secondary text-white" style="font-size: 12px;">' . get_string('precheck_waiting', 'quizaccess_liveproctoring') . '</span>';
+        $html .= '          </div>';
+
+        if (!isset($settings->requiremic) || !empty($settings->requiremic)) {
+            $html .= '          <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">';
+            $html .= '            <span class="fw-semibold" style="font-size: 14px;">🎙️ ' . get_string('precheck_mic_status', 'quizaccess_liveproctoring') . '</span>';
+            $html .= '            <span id="lp-status-mic" class="badge bg-secondary text-white" style="font-size: 12px;">' . get_string('precheck_waiting', 'quizaccess_liveproctoring') . '</span>';
+            $html .= '          </div>';
+        }
+
+        if (!isset($settings->blockmultiscreen) || !empty($settings->blockmultiscreen)) {
+            $html .= '          <div class="d-flex align-items-center justify-content-between mb-1">';
+            $html .= '            <span class="fw-semibold" style="font-size: 14px;">🖥️ ' . get_string('precheck_screen_status', 'quizaccess_liveproctoring') . '</span>';
+            $html .= '            <span id="lp-status-screen" class="badge bg-secondary text-white" style="font-size: 12px;">' . get_string('precheck_waiting', 'quizaccess_liveproctoring') . '</span>';
+            $html .= '          </div>';
+        }
+        $html .= '        </div>';
+
+        // Action button
+        $html .= '        <div class="mt-3">';
+        $html .= '          <button type="button" id="lp-btn-verify-device" class="btn btn-warning btn-lg w-100 fw-bold shadow-sm" style="border-radius: 10px; padding: 12px 20px; font-size: 15px;">';
+        $html .= '            📷🎙️ ' . get_string('precheck_btn_verify', 'quizaccess_liveproctoring');
+        $html .= '          </button>';
+        $html .= '        </div>';
+
+        $html .= '      </div>';
+        $html .= '    </div>';
+
+        // Error and Success alerts
+        $html .= '    <div id="lp-precheck-error" class="alert alert-danger mt-3 mb-0" style="display: none; border-radius: 8px; font-size: 14px;"></div>';
+        $html .= '    <div id="lp-precheck-success" class="alert alert-success mt-3 mb-0" style="display: none; border-radius: 8px; font-weight: bold; font-size: 14px;">';
+        $html .= '      ✅ ' . get_string('precheck_success', 'quizaccess_liveproctoring');
+        $html .= '    </div>';
+
+        $html .= '  </div>';
+        $html .= '</div>';
+
+        return $html;
     }
 
     /**
