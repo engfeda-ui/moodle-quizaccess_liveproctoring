@@ -31,6 +31,7 @@ $string['plugindescription'] = 'Monitors students during quiz attempts using web
 $string['setting:enablecamera'] = 'Enable camera proctoring';
 $string['setting:enableai'] = 'Enable AI analysis';
 $string['setting:snapshotinterval'] = 'Snapshot interval (seconds)';
+$string['setting:resolution'] = 'Webcam resolution (width in px)';
 $string['setting:warninglimit'] = 'Maximum warnings before action';
 $string['setting:autosubmit'] = 'Auto-submit on warning limit';
 $string['setting:showwatermark'] = 'Show student name watermark';

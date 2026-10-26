@@ -67,6 +67,7 @@
         <FIELD NAME="warninglimit" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="3" COMMENT="Warnings before auto-submit"/>
         <FIELD NAME="autosubmit" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" COMMENT="Auto-submit on warning limit"/>
         <FIELD NAME="referencerequired" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" COMMENT="Require reference photo before exam"/>
+        <FIELD NAME="resolution" TYPE="int" LENGTH="5" NOTNULL="true" DEFAULT="320" COMMENT="Preferred webcam resolution (width)"/>
         <FIELD NAME="showwatermark" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"/>
         <FIELD NAME="blocktabs" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" COMMENT="Warn on tab switch"/>
       </FIELDS>

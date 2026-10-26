@@ -311,10 +311,11 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             return;
         }
 
+        const res = cfg.resolution || 320;
         navigator.mediaDevices.getUserMedia({
             video: {
-                width: { ideal: 320 },
-                height: { ideal: 240 },
+                width: { ideal: res },
+                height: { ideal: Math.round(res * 0.75) },
                 facingMode: 'user',
             },
         }).then(function(mediaStream) {

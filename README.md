@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.10-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.11-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,13 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.11 (Build `2026102602`) — 2026-10-26
+- **Enhancements vs Proctoring for Moodle (BS23):**
+  - **Configurable webcam resolution**: new quiz setting `liveproctoring_resolution` (width px) wired through PHP → AMD (src + minified build) into `getUserMedia` constraints.
+  - **Bulk delete snapshots**: report.php now offers a CSRF-protected "Delete all snapshots" button (capability `deletesnapshots`) that purges Moodle file area + DB records.
+  - **DB upgrade**: added `resolution` column to `quizaccess_liveproctoring_quiz` (upgrade step 2026102602).
+- **Production hardening**: maintained v1.0.10 IDOR guards and install.xml repair.
 
 ### 🌟 v1.0.10 (Build `2026102601`) — 2026-10-26
 - **Production Hardening & Cross-Module IDOR Defense (v1.0.10):**

@@ -32,6 +32,21 @@ if ((int) $cm->instance !== (int) $quiz->id) {
     throw new moodle_exception('invalidcoursemodule');
 }
 
+// Handle bulk delete of all snapshots for this quiz.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && optional_param('deleteall', 0, PARAM_INT)) {
+    confirm_sesskey();
+    require_capability('quizaccess/liveproctoring:deletesnapshots', $context);
+    $fs = get_file_storage();
+    $fs->delete_area_files($context->id, 'quizaccess_liveproctoring', 'snapshots');
+    $DB->delete_records('quizaccess_liveproctoring_snaps', ['quizid' => $quizid]);
+    redirect(
+        new moodle_url('/mod/quiz/accessrule/liveproctoring/report.php', ['cmid' => $cmid, 'quizid' => $quizid]),
+        'All snapshots for this quiz have been deleted.',
+        null,
+        \core\output\notification::NOTIFY_SUCCESS
+    );
+}
+
 $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/liveproctoring/report.php',
     ['cmid' => $cmid, 'quizid' => $quizid]));
 $PAGE->set_context($context);
@@ -102,6 +117,21 @@ foreach ($students as $st) {
 
 echo html_writer::end_tag('tbody');
 echo html_writer::end_tag('table');
+
+// Bulk delete control (teachers with deletesnapshots capability).
+if (has_capability('quizaccess/liveproctoring:deletesnapshots', $context)) {
+    echo html_writer::start_tag('form', [
+        'method' => 'post',
+        'action' => (new moodle_url('/mod/quiz/accessrule/liveproctoring/report.php',
+            ['cmid' => $cmid, 'quizid' => $quizid]))->out(false),
+        'class'  => 'mt-3',
+        'onsubmit' => "return confirm('Delete ALL snapshots for this quiz? This cannot be undone.');",
+    ]);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'deleteall', 'value' => '1']);
+    echo html_writer::tag('button', '🗑️ Delete all snapshots', ['type' => 'submit', 'class' => 'btn btn-danger btn-sm']);
+    echo html_writer::end_tag('form');
+}
 
 // Detail view for a specific student.
 if ($userid > 0) {

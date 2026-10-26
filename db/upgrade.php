@@ -82,5 +82,14 @@ function xmldb_quizaccess_liveproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026102509, 'quizaccess', 'liveproctoring');
     }
 
+    if ($oldversion < 2026102602) {
+        $quiztable = new xmldb_table('quizaccess_liveproctoring_quiz');
+        $resolutionfield = new xmldb_field('resolution', XMLDB_TYPE_INTEGER, '5', null, XMLDB_NOTNULL, null, '320', 'referencerequired');
+        if ($dbman->table_exists($quiztable) && !$dbman->field_exists($quiztable, $resolutionfield)) {
+            $dbman->add_field($quiztable, $resolutionfield);
+        }
+        upgrade_plugin_savepoint(true, 2026102602, 'quizaccess', 'liveproctoring');
+    }
+
     return true;
 }
