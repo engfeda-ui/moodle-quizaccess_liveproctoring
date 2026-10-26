@@ -533,7 +533,7 @@ define([], function() {
         }).catch(function() {});
 
         // Start polling stream signal every 1s.
-        activeSpotlight.pollTimer = setInterval(pollSpotlightStream, 1000);
+        activeSpotlight.pollTimer = setInterval(pollSpotlightStream, 500);
     };
 
     /**

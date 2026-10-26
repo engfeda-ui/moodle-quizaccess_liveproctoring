@@ -634,7 +634,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                     applyTeacherAnswer(data.answer, data.teacher_candidates);
                 }
             }).catch(function() {});
-        }, 2000);
+        }, 1000);
     };
 
     /**
