@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.12-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.13-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,10 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.13 (Build `2026102604`) — 2026-10-26
+- **Automated tests**: Added `tests/quizaccess_liveproctoring_test.php` (PHPUnit) covering DB tables, AI analyzer default result, and rule class loading.
+- **Quality**: aligns with Moodle certified plugin automated testing support.
 
 ### 🌟 v1.0.12 (Build `2026102603`) — 2026-10-26
 - **Identity Verification (vs Proctoring for Moodle):**
