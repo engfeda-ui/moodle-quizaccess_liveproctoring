@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.20-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.21-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,15 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.21 (Build `2026102621`) — 2026-10-26
+- **Server-Enforced Ejection, Anti-Cheating Hardware Detection & Multi-Page Continuity (Phase 2):**
+  - **Server-Enforced Auto-Submit & Ejection (`live_signal.php`, `rule.php`)**: Integrated `quiz_attempt::process_finish(time(), false)` on proctor force-termination and automated student violation submission, instantly finalizing and locking the attempt in Moodle backend. Enforced `prevent_access()` block so ejected candidates cannot reopen or resume the quiz.
+  - **Virtual Camera & Streaming Software Detection (`amd/src/proctoring_student.js`)**: Added real-time device track inspection against virtual camera drivers (`obs`, `virtual`, `manycam`, `v4l2loopback`, `splitcam`, `camo`, `droidcam`, `iriun`, `fake`, `software camera`). Automatically halts virtual streams and flags `virtual_camera_detected`.
+  - **Multi-Monitor & Extended Display Defense (`amd/src/proctoring_student.js`)**: Added multi-screen detection via `window.screen.isExtended` and display geometry inspection, logging `multi_monitor_detected` and displaying warning overlays.
+  - **Moodle Quiz Multi-Page Continuity (`amd/src/proctoring_student.js`)**: Cached camera permission authorizations in `sessionStorage` per attempt, eliminating intrusive full-screen camera gate re-prompts on paged quiz question navigation.
+  - **Debounced Tab-Switch Detection (`amd/src/proctoring_student.js`)**: Added 1000ms debouncing window across `visibilitychange` and `blur` events, eliminating false double warnings.
+  - **Full Deletion Lifecycle & WebSocket SDP Speedup (`rule.php`, `amd/src/proctoring_monitor.js`)**: Added cleanup of `quizaccess_liveproctoring_live` records and snapshot files in `delete_settings()`, and added instant WebSocket broadcasting for SDP answers.
 
 ### 🌟 v1.0.20 (Build `2026102620`) — 2026-10-26
 - **Critical Production Stability & Security Hardening (Phase 1):**

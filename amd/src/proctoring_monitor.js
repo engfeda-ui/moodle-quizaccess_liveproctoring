@@ -699,7 +699,13 @@ define([], function() {
             }).then(function(answer) {
                 return pc.setLocalDescription(answer);
             }).then(function() {
-                // Send answer back to student.
+                // Send answer back to student via WS if connected and HTTP fallback.
+                sendWS({
+                    type:      'send_answer',
+                    attemptid: activeSpotlight.attemptid,
+                    answer:    JSON.stringify(pc.localDescription),
+                    cmid:      cfg.cmid,
+                });
                 fetch(cfg.signalurl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

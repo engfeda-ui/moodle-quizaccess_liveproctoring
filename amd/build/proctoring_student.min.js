@@ -83,9 +83,48 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         cfg = config;
 
         setupTabSwitch();
-        showCameraGate(false);
+        setupMultiMonitorCheck();
+
+        const attemptid = getAttemptId();
+        const hasSession = attemptid ? sessionStorage.getItem('lp_cam_granted_' + attemptid) : null;
+        if (hasSession) {
+            requestCamera(false);
+        } else {
+            showCameraGate(false);
+        }
+
         setupSignalHeartbeat();
         connectWS();
+    };
+
+    /**
+     * Check for multiple displays / extended screens.
+     */
+    const setupMultiMonitorCheck = function() {
+        let hasWarnedScreens = false;
+        const checkScreens = function() {
+            if (hasWarnedScreens) {
+                return;
+            }
+            let isExtended = false;
+            if (window.screen && typeof window.screen.isExtended === 'boolean') {
+                isExtended = window.screen.isExtended;
+            } else if (window.screen && (window.screen.availWidth > window.screen.width * 1.5)) {
+                isExtended = true;
+            }
+
+            if (isExtended) {
+                hasWarnedScreens = true;
+                logEvent('multi_monitor_detected', 'high');
+                showWarning(
+                    cfg.strings.multimonitorwarning ||
+                    '⚠️ Multiple displays detected. Using secondary or extended monitors is prohibited during the exam.'
+                );
+            }
+        };
+
+        checkScreens();
+        window.addEventListener('resize', checkScreens);
     };
 
     /**
@@ -113,6 +152,9 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                         if (!isLiveStreaming && stream && cameraActive && attemptid) {
                             startLiveWebRTC(attemptid);
                         }
+                    }
+                    if ((data.type === 'send_answer' || data.type === 'answer') && data.answer && isLiveStreaming && !answerApplied && peerConnection) {
+                        applyTeacherAnswer(data.answer, data.candidates || data.teacher_candidates);
                     }
                 } catch (err) {}
             };
@@ -364,8 +406,41 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                 facingMode: 'user',
             },
         }).then(function(mediaStream) {
+            // Virtual Camera Blacklist Inspection.
+            const tracks = mediaStream.getVideoTracks();
+            if (tracks.length > 0) {
+                const track = tracks[0];
+                const trackLabel = (track.label || '').toLowerCase();
+                const blacklistedKeywords = [
+                    'obs', 'virtual', 'manycam', 'v4l2loopback', 'splitcam',
+                    'camo', 'droidcam', 'iriun', 'fake', 'software camera', 'e2esoft'
+                ];
+                const isVirtual = blacklistedKeywords.some(function(keyword) {
+                    return trackLabel.indexOf(keyword) !== -1;
+                });
+
+                if (isVirtual) {
+                    track.stop();
+                    stream = null;
+                    cameraActive = false;
+                    logEvent('virtual_camera_detected', 'high');
+                    const errTemplate = cfg.strings.virtualcamerablocked || 'Virtual camera detected ({$a}). Virtual cameras are strictly prohibited.';
+                    const errMsg = errTemplate.replace('{$a}', track.label || 'Virtual Device');
+                    showCameraGate(false);
+                    showGateError(errMsg);
+                    return;
+                }
+            }
+
             stream = mediaStream;
             cameraActive = true;
+
+            const attemptid = getAttemptId();
+            if (attemptid) {
+                try {
+                    sessionStorage.setItem('lp_cam_granted_' + attemptid, '1');
+                } catch (e) {}
+            }
 
             // Stop any reconnection countdown.
             if (reconnectTimer) {
@@ -388,7 +463,6 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             }
 
             // Monitor video track liveness.
-            const tracks = mediaStream.getVideoTracks();
             if (tracks.length > 0) {
                 tracks[0].onended = function() {
                     handleCameraLost();
@@ -476,21 +550,32 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     };
 
     /**
-     * Detect tab visibility changes.
+     * Detect tab visibility changes with debouncing to prevent double warnings.
      */
     const setupTabSwitch = function() {
         if (!cfg.blocktabs) {
             return;
         }
+
+        let lastTabSwitchTime = 0;
+        const handleTabSwitch = function() {
+            const now = Date.now();
+            if (now - lastTabSwitchTime < 1000) {
+                return;
+            }
+            lastTabSwitchTime = now;
+            issueWarning('tab_switch');
+        };
+
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
-                issueWarning('tab_switch');
+                handleTabSwitch();
             }
         });
 
         // Blur = user switched window.
         window.addEventListener('blur', function() {
-            issueWarning('tab_switch');
+            handleTabSwitch();
         });
     };
 
@@ -576,7 +661,8 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             return;
         }
 
-        fetch(cfg.pushurl.replace('push_snapshot.php', 'log_event.php'), {
+        const logUrl = cfg.logeventurl || cfg.pushurl.replace('push_snapshot.php', 'log_event.php');
+        fetch(logUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
@@ -594,10 +680,25 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     };
 
     /**
-     * Auto-submit the quiz attempt.
+     * Auto-submit the quiz attempt with server-enforced lock.
      */
     const autoSubmitAttempt = function() {
         showWarning(cfg.strings.autosubmit || 'Too many violations. Exam submitted automatically.');
+
+        const attemptid = getAttemptId();
+        if (attemptid && cfg.signalurl) {
+            // Server-enforced immediate finalization in Moodle database
+            fetch(cfg.signalurl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    action:    'student_auto_submit',
+                    attemptid: attemptid,
+                    reason:    'warning_limit',
+                    sesskey:   cfg.sesskey,
+                }),
+            }).catch(function() {});
+        }
 
         setTimeout(function() {
             // Find and click the finish attempt button.
@@ -608,13 +709,12 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                 finishBtn.click();
             } else {
                 // Fallback: navigate to finish URL.
-                const attemptid = getAttemptId();
                 if (attemptid) {
                     window.location.href = M.cfg.wwwroot +
                         '/mod/quiz/summary.php?attempt=' + attemptid + '&cmid=' + cfg.cmid;
                 }
             }
-        }, 3000);
+        }, 2500);
     };
 
     /**

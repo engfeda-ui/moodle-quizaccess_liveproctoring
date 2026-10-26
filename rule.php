@@ -172,7 +172,16 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
         global $DB;
         $DB->delete_records('quizaccess_liveproctoring_quiz', ['quizid' => $quiz->id]);
         $DB->delete_records('quizaccess_liveproctoring_snaps', ['quizid' => $quiz->id]);
+        $DB->delete_records('quizaccess_liveproctoring_live', ['quizid' => $quiz->id]);
         $DB->delete_records('quizaccess_liveproctoring_events', ['cmid' => $quiz->cmid ?? 0]);
+
+        if (!empty($quiz->course)) {
+            $fs = get_file_storage();
+            $context = context_course::instance($quiz->course, IGNORE_MISSING);
+            if ($context) {
+                $fs->delete_area_files($context->id, 'quizaccess_liveproctoring', 'snapshots');
+            }
+        }
     }
 
     /**
@@ -200,12 +209,45 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
     }
 
     /**
-     * Prevent access to the quiz if camera not available (client-side check via JS).
+     * Prevent access to the quiz if proctoring violation limit reached or force-terminated.
      *
      * @return string|null an error message, or null if no block.
      */
     public function prevent_access() {
-        // Camera permission check is done client-side (AMD module).
+        global $DB, $USER;
+
+        $quizid = $this->quizobj->get_quizid();
+        $settings = self::get_quiz_proctoring_settings($quizid);
+        if (empty($settings) || empty($settings->enablecamera)) {
+            return null;
+        }
+
+        // Check if student has an attempt with termination flag.
+        $sql = "SELECT l.terminate_flag, qa.id AS attemptid
+                  FROM {quizaccess_liveproctoring_live} l
+                  JOIN {quiz_attempts} qa ON qa.id = l.attemptid
+                 WHERE qa.quiz = :quizid AND qa.userid = :userid AND l.terminate_flag = 1";
+        $terminated = $DB->get_record_sql($sql, ['quizid' => $quizid, 'userid' => $USER->id]);
+        if ($terminated) {
+            return get_string('ejectedmessage', 'quizaccess_liveproctoring');
+        }
+
+        // Check warning limit if auto-submit is enabled.
+        if (!empty($settings->autosubmit) && !empty($settings->warninglimit)) {
+            $warnings = $DB->count_records_sql(
+                "SELECT COUNT(e.id)
+                   FROM {quizaccess_liveproctoring_events} e
+                   JOIN {quiz_attempts} qa ON qa.id = e.attemptid
+                  WHERE qa.quiz = :quizid
+                    AND qa.userid = :userid
+                    AND e.severity IN ('high', 'medium')",
+                ['quizid' => $quizid, 'userid' => $USER->id]
+            );
+            if ($warnings >= (int) $settings->warninglimit) {
+                return get_string('warninglimitexceeded', 'quizaccess_liveproctoring');
+            }
+        }
+
         return null;
     }
 
@@ -292,21 +334,27 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
             'signalurl'        => (new moodle_url(
                 '/mod/quiz/accessrule/liveproctoring/live_signal.php'
             ))->out(false),
+            'logeventurl'      => (new moodle_url(
+                '/mod/quiz/accessrule/liveproctoring/log_event.php'
+            ))->out(false),
             'sesskey'          => sesskey(),
             'username'         => fullname($USER),
             'strings'          => [
-                'warningtitle'    => get_string('warningtitle', 'quizaccess_liveproctoring'),
-                'warningmessage'  => get_string('warningmessage', 'quizaccess_liveproctoring'),
-                'tabswitch'       => get_string('tabswitchwarning', 'quizaccess_liveproctoring'),
-                'camerablocked'   => get_string('camerablocked', 'quizaccess_liveproctoring'),
-                'autosubmit'      => get_string('autosubmitmessage', 'quizaccess_liveproctoring'),
-                'warningcount'    => get_string('warningcount', 'quizaccess_liveproctoring'),
-                'cameragate_title'  => get_string('cameragate_title', 'quizaccess_liveproctoring'),
-                'cameragate_desc'   => get_string('cameragate_desc', 'quizaccess_liveproctoring'),
-                'cameragate_btn'    => get_string('cameragate_btn', 'quizaccess_liveproctoring'),
-                'cameragate_retry'  => get_string('cameragate_retry', 'quizaccess_liveproctoring'),
-                'cameragate_denied' => get_string('cameragate_denied', 'quizaccess_liveproctoring'),
-                'cameragate_lost'   => get_string('cameragate_lost', 'quizaccess_liveproctoring'),
+                'warningtitle'         => get_string('warningtitle', 'quizaccess_liveproctoring'),
+                'warningmessage'       => get_string('warningmessage', 'quizaccess_liveproctoring'),
+                'tabswitch'            => get_string('tabswitchwarning', 'quizaccess_liveproctoring'),
+                'camerablocked'        => get_string('camerablocked', 'quizaccess_liveproctoring'),
+                'autosubmit'           => get_string('autosubmitmessage', 'quizaccess_liveproctoring'),
+                'warningcount'         => get_string('warningcount', 'quizaccess_liveproctoring'),
+                'cameragate_title'     => get_string('cameragate_title', 'quizaccess_liveproctoring'),
+                'cameragate_desc'      => get_string('cameragate_desc', 'quizaccess_liveproctoring'),
+                'cameragate_btn'       => get_string('cameragate_btn', 'quizaccess_liveproctoring'),
+                'cameragate_retry'     => get_string('cameragate_retry', 'quizaccess_liveproctoring'),
+                'cameragate_denied'    => get_string('cameragate_denied', 'quizaccess_liveproctoring'),
+                'cameragate_lost'      => get_string('cameragate_lost', 'quizaccess_liveproctoring'),
+                'virtualcamerablocked' => get_string('virtualcamerablocked', 'quizaccess_liveproctoring', ''),
+                'multimonitorwarning'  => get_string('multimonitorwarning', 'quizaccess_liveproctoring'),
+                'ejectedmessage'       => get_string('ejectedmessage', 'quizaccess_liveproctoring'),
             ],
         ];
 

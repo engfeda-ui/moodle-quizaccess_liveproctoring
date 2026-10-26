@@ -165,6 +165,18 @@ if (in_array($action, $teacheractions)) {
             $record->timemodified   = time();
             $DB->update_record('quizaccess_liveproctoring_live', $record);
         }
+
+        // Server-enforced immediate finalization in Moodle.
+        require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+        try {
+            $attemptobj = quiz_attempt::create($attemptid);
+            if ($attemptobj->is_inprogress()) {
+                $attemptobj->process_finish(time(), false);
+            }
+        } catch (\Exception $e) {
+            // Already finalized or in transitional state.
+        }
+
         // Log termination event.
         $ev = (object)[
             'userid'       => $attempt->userid,
@@ -201,6 +213,39 @@ if ($attempt->userid != $USER->id) {
 }
 
 $record = $DB->get_record('quizaccess_liveproctoring_live', ['attemptid' => $attemptid]);
+
+if ($action === 'student_auto_submit') {
+    $reason = optional_param('reason', 'warning_limit', PARAM_ALPHAEXT);
+    require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+    try {
+        $attemptobj = quiz_attempt::create($attemptid);
+        if ($attemptobj->is_inprogress()) {
+            $attemptobj->process_finish(time(), false);
+        }
+    } catch (\Exception $e) {}
+
+    if ($record) {
+        $record->terminate_flag = 1;
+        $record->status         = 'closed';
+        $record->timemodified   = time();
+        $DB->update_record('quizaccess_liveproctoring_live', $record);
+    }
+
+    $ev = (object)[
+        'userid'       => $attempt->userid,
+        'cmid'         => $cmid,
+        'attemptid'    => $attemptid,
+        'eventtype'    => 'auto_submitted',
+        'severity'     => 'high',
+        'warningcount' => 99,
+        'message'      => 'Attempt automatically finalized on server: ' . $reason,
+        'timecreated'  => time(),
+    ];
+    $DB->insert_record('quizaccess_liveproctoring_events', $ev);
+
+    echo json_encode(['success' => true]);
+    exit;
+}
 
 if ($action === 'check_stream') {
     if (!$record) {

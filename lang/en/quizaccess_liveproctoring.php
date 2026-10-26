@@ -64,6 +64,10 @@ $string['cameragate_btn'] = '📷 Enable Camera & Enter Exam';
 $string['cameragate_retry'] = '🔄 Retry Camera Access';
 $string['cameragate_denied'] = 'Camera access denied! You must allow camera access in browser permissions to take this exam.';
 $string['cameragate_lost'] = 'Camera feed was disconnected! Please restore camera or your exam will be terminated.';
+$string['ejectedmessage'] = 'Your exam attempt has been terminated by the proctor due to proctoring violations. You can no longer access this quiz.';
+$string['warninglimitexceeded'] = 'You have exceeded the maximum allowed proctoring violations. Your exam has been submitted and locked.';
+$string['virtualcamerablocked'] = 'Virtual camera detected ({$a}). Virtual cameras and broadcasting software are strictly prohibited. Please select your physical webcam to proceed.';
+$string['multimonitorwarning'] = 'Multiple displays detected. Using secondary or extended monitors is prohibited during the exam.';
 
 // Teacher dashboard.
 $string['livemonitor'] = 'Live Monitor';
