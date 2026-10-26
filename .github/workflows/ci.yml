@@ -21,17 +21,17 @@ jobs:
         php: ['8.1', '8.2', '8.3']
 
     services:
-      mysql:
-        image: mysql:8.0
+      mariadb:
+        image: mariadb:10.6
         env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: moodle_ci_db
-          MYSQL_USER: moodle
-          MYSQL_PASSWORD: moodle
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: moodle_ci_db
+          MARIADB_USER: moodle
+          MARIADB_PASSWORD: moodle
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
