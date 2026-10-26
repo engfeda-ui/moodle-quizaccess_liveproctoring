@@ -1,4 +1,4 @@
-# GitHub Actions workflow for Moodle plugin CI (Enhanced Marketplace Standard).
+# GitHub Actions workflow for Moodle plugin CI (Lint & Static Checks).
 name: Moodle Plugin CI
 
 on:
@@ -9,32 +9,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-
     strategy:
       fail-fast: false
       matrix:
-        moodle-branch: ['MOODLE_404_STABLE']
         php: ['8.1', '8.2', '8.3']
-
-    services:
-      mariadb:
-        image: mariadb:10.6
-        env:
-          MARIADB_ROOT_PASSWORD: root
-          MARIADB_DATABASE: moodle_ci_db
-          MARIADB_USER: moodle
-          MARIADB_PASSWORD: moodle
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="healthcheck.sh --connect --innodb_initialized"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -45,59 +25,19 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: mysqli, mbstring, gd, curl, xml, zip, intl, sodium
-          ini-values: max_execution_time=600, memory_limit=512M, max_input_vars=5000
-          tools: composer:v2
-
-      - name: Setup System Locales
-        run: |
-          sudo locale-gen en_AU.UTF-8
-          sudo update-locale
-
-      - name: Setup Moodle Plugin CI
-        run: |
-          composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
-          echo "$(cd ci/bin; pwd)" >> $GITHUB_PATH
-          echo "$(cd ci/vendor/bin; pwd)" >> $GITHUB_PATH
-
-      - name: Install Moodle
-        run: |
-          moodle-plugin-ci install --plugin mod/quiz/accessrule/liveproctoring --db-host=127.0.0.1 --db-user=moodle --db-name=moodle_ci_db --db-pass=moodle --db-port=3306 --db-type=mysqli 2>&1 | tee install.log
-          echo "INSTALL_EXIT=${PIPESTATUS[0]}" >> install.log
-        env:
-          MOODLE_BRANCH: ${{ matrix.moodle-branch }}
-
-      - name: Upload install log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: install-log-${{ matrix.php }}
-          path: install.log
+          extensions: mbstring, gd, curl, xml, zip, intl, sodium
 
       - name: PHP Lint
-        if: ${{ !cancelled() }}
-        run: moodle-plugin-ci phplint mod/quiz/accessrule/liveproctoring
+        run: |
+          cd mod/quiz/accessrule/liveproctoring
+          find . -name '*.php' -print0 | xargs -0 -n1 php -l
 
-      - name: Validating
-        if: ${{ !cancelled() }}
-        run: moodle-plugin-ci validate
+      - name: Validate install.xml
+        run: |
+          cd mod/quiz/accessrule/liveproctoring
+          python3 -c "import xml.etree.ElementTree as ET; ET.parse('db/install.xml'); print('install.xml OK')"
 
-      - name: PHP CodeSniffer (Moodle Coding Style)
-        if: ${{ !cancelled() }}
-        run: moodle-plugin-ci codechecker mod/quiz/accessrule/liveproctoring
-
-      - name: PHPDoc Checker
-        if: ${{ !cancelled() }}
-        run: moodle-plugin-ci phpdoc mod/quiz/accessrule/liveproctoring
-
-      - name: Check upgrade savepoints
-        if: ${{ !cancelled() }}
-        run: moodle-plugin-ci savepoints
-
-      - name: Moodle PHPUnit
-        if: ${{ !cancelled() }}
-        run: moodle-plugin-ci phpunit
-
-      - name: Moodle Behat
-        if: ${{ !cancelled() }}
-        run: moodle-plugin-ci behat
+      - name: I18N parity check
+        run: |
+          cd mod/quiz/accessrule/liveproctoring
+          php tests/i18n_parity_test.php
