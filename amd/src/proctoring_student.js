@@ -311,11 +311,12 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             return;
         }
 
-        const res = cfg.resolution || 320;
+        const res = cfg.resolution || 640;
         navigator.mediaDevices.getUserMedia({
             video: {
                 width: { ideal: res },
                 height: { ideal: Math.round(res * 0.75) },
+                frameRate: { ideal: 30 },
                 facingMode: 'user',
             },
         }).then(function(mediaStream) {
@@ -673,8 +674,30 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                 } catch (e) {}
             }
 
+            const waitForIceGathering = function(pc) {
+                return new Promise(function(resolve) {
+                    if (pc.iceGatheringState === 'complete') {
+                        resolve();
+                        return;
+                    }
+                    const check = function() {
+                        if (pc.iceGatheringState === 'complete') {
+                            pc.removeEventListener('icegatheringstatechange', check);
+                            resolve();
+                        }
+                    };
+                    pc.addEventListener('icegatheringstatechange', check);
+                    setTimeout(function() {
+                        pc.removeEventListener('icegatheringstatechange', check);
+                        resolve();
+                    }, 2000);
+                });
+            };
+
             peerConnection.createOffer().then(function(offer) {
                 return peerConnection.setLocalDescription(offer);
+            }).then(function() {
+                return waitForIceGathering(peerConnection);
             }).then(function() {
                 const params = {
                     action:     'send_offer',

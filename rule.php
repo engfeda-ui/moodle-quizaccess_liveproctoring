@@ -99,7 +99,7 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
         $mform->addElement('text', 'liveproctoring_resolution',
             get_string('setting:resolution', 'quizaccess_liveproctoring'));
         $mform->setType('liveproctoring_resolution', PARAM_INT);
-        $mform->setDefault('liveproctoring_resolution', 320);
+        $mform->setDefault('liveproctoring_resolution', 640);
         $mform->disabledIf('liveproctoring_resolution', 'liveproctoring_enablecamera', 'eq', '0');
 
         // Warning limit before auto-submit.
@@ -153,7 +153,7 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
         $data->blocktabs          = !empty($quiz->liveproctoring_blocktabs) ? 1 : 0;
         $data->referencerequired  = !empty($quiz->liveproctoring_referencerequired) ? 1 : 0;
         $data->resolution         = !empty($quiz->liveproctoring_resolution)
-            ? (int) $quiz->liveproctoring_resolution : 320;
+            ? (int) $quiz->liveproctoring_resolution : 640;
 
         if ($record) {
             $data->id = $record->id;
@@ -275,7 +275,7 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
             'userid'           => $USER->id,
             'attemptid'        => $attemptid,
             'snapshotinterval' => (int) ($settings->snapshotinterval ?? 30),
-            'resolution'       => (int) ($settings->resolution ?? 320),
+            'resolution'       => (int) ($settings->resolution ?? 640),
             'referencerequired'=> (bool) ($settings->referencerequired ?? false),
             'warninglimit'     => (int) ($settings->warninglimit ?? 3),
             'autosubmit'       => (bool) ($settings->autosubmit ?? false),

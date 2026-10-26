@@ -47,6 +47,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && optional_param('deleteall', 0, PARA
     );
 }
 
+// Handle course-level bulk delete of all snapshots.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && optional_param('deletecourse', 0, PARAM_INT)) {
+    confirm_sesskey();
+    require_capability('quizaccess/liveproctoring:deletesnapshots', $context);
+    $fs = get_file_storage();
+    $cms = get_coursemodules_in_course('quiz', $course->id);
+    foreach ($cms as $cmobj) {
+        $ctx = context_module::instance($cmobj->id);
+        $fs->delete_area_files($ctx->id, 'quizaccess_liveproctoring', 'snapshots');
+    }
+    $DB->delete_records_select(
+        'quizaccess_liveproctoring_snaps',
+        'quizid IN (SELECT id FROM {quiz} WHERE course = :courseid)',
+        ['courseid' => $course->id]
+    );
+    redirect(
+        new moodle_url('/mod/quiz/accessrule/liveproctoring/report.php', ['cmid' => $cmid, 'quizid' => $quizid]),
+        'All snapshots for this course have been deleted.',
+        null,
+        \core\output\notification::NOTIFY_SUCCESS
+    );
+}
+
 $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/liveproctoring/report.php',
     ['cmid' => $cmid, 'quizid' => $quizid]));
 $PAGE->set_context($context);
@@ -130,6 +153,19 @@ if (has_capability('quizaccess/liveproctoring:deletesnapshots', $context)) {
     echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
     echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'deleteall', 'value' => '1']);
     echo html_writer::tag('button', '🗑️ Delete all snapshots', ['type' => 'submit', 'class' => 'btn btn-danger btn-sm']);
+    echo html_writer::end_tag('form');
+
+    // Course-level bulk delete.
+    echo html_writer::start_tag('form', [
+        'method' => 'post',
+        'action' => (new moodle_url('/mod/quiz/accessrule/liveproctoring/report.php',
+            ['cmid' => $cmid, 'quizid' => $quizid]))->out(false),
+        'class'  => 'mt-2',
+        'onsubmit' => "return confirm('Delete ALL snapshots for the entire course? This cannot be undone.');",
+    ]);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'deletecourse', 'value' => '1']);
+    echo html_writer::tag('button', '🗑️ Delete all snapshots (course)', ['type' => 'submit', 'class' => 'btn btn-outline-danger btn-sm']);
     echo html_writer::end_tag('form');
 }
 

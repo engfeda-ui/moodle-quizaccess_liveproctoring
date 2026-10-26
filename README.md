@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.14-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.16-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,15 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.16 (Build `2026102607`) — 2026-10-26
+- **Video quality improvements (Zoom-like):**
+  - Default resolution raised to 640px width + 30 FPS frameRate.
+  - ICE gathering fix: wait for gathering complete before sending offer (better NAT traversal).
+  - Minified build updated accordingly.
+
+### 🌟 v1.0.15 (Build `2026102606`) — 2026-10-26
+- **Course-level bulk delete**: report.php now offers a CSRF-protected "Delete all snapshots (course)" button that purges file areas for all quiz modules in the course and deletes DB records.
 
 ### 🌟 v1.0.14 (Build `2026102605`) — 2026-10-26
 - **Async AI queue**: Moved risk analysis to scheduled task `analyze_snapshots` (runs every 5 min) to avoid blocking student requests and improve scalability.
