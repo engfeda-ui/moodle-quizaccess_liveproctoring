@@ -102,6 +102,9 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
      * Check for multiple displays / extended screens.
      */
     const setupMultiMonitorCheck = function() {
+        if (!cfg.blockmultiscreen) {
+            return;
+        }
         let hasWarnedScreens = false;
         const checkScreens = function() {
             if (hasWarnedScreens) {
@@ -212,6 +215,8 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             ? '🔄 إعادة تفعيل الكاميرا والمايك ومتابعة الحل'
             : (cfg.strings.cameragate_btn || '📷🎤 السماح بالكاميرا والمايك ودخول الامتحان');
 
+        const reconnectLimit = parseInt(cfg.reconnectgrace, 10) || 15;
+
         gate.innerHTML = `
             <div style="max-width:480px;width:100%;background:#161b22;border:1px solid ${isReconnect ? '#da3633' : '#30363d'};border-radius:16px;padding:32px 24px;text-align:center;box-shadow:0 16px 40px rgba(0,0,0,0.6);color:#f0f6fc;">
                 <div style="font-size:48px;margin-bottom:12px;">${isReconnect ? '🚨' : '📷🎤'}</div>
@@ -219,7 +224,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                 <p style="color:#8b949e;font-size:14px;line-height:1.6;margin:0 0 20px;">${desc}</p>
                 ${isReconnect ? `
                     <div style="background:rgba(218,54,51,0.15);border:1px solid #da3633;border-radius:8px;padding:10px;margin-bottom:20px;color:#f85149;font-weight:bold;font-size:15px;">
-                        ⏰ الوقت المتبقي: <span id="lp-countdown">15</span> ثانية قبل الإخراج التلقائي
+                        ⏰ الوقت المتبقي: <span id="lp-countdown">${reconnectLimit}</span> ثانية قبل الإخراج التلقائي
                     </div>
                 ` : ''}
                 <button id="lp-gate-btn" style="background:#238636;color:#fff;border:none;padding:12px 24px;font-size:15px;font-weight:bold;border-radius:8px;cursor:pointer;width:100%;transition:background 0.2s;">
@@ -232,7 +237,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         document.body.appendChild(gate);
 
         if (isReconnect) {
-            reconnectSeconds = 15;
+            reconnectSeconds = reconnectLimit;
             if (reconnectTimer) {
                 clearInterval(reconnectTimer);
             }
@@ -406,42 +411,49 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             facingMode: 'user',
         };
 
+        const needMic = !!cfg.requiremic;
+
         navigator.mediaDevices.getUserMedia({
             video: videoConstraints,
-            audio: true,
+            audio: needMic,
         }).then(function(mediaStream) {
-            // Strictly verify BOTH video AND audio tracks are present and active!
+            // Strictly verify video track, and audio track if microphone is required.
             const videoTracks = mediaStream.getVideoTracks();
             const audioTracks = mediaStream.getAudioTracks();
-            if (!videoTracks.length || !audioTracks.length) {
+            if (!videoTracks.length || (needMic && !audioTracks.length)) {
                 mediaStream.getTracks().forEach(function(t) { t.stop(); });
                 cameraActive = false;
-                showGateError(cfg.strings.cameramic_required || 'Webcam and Microphone access are strictly required to enter this exam.');
+                const err = needMic
+                    ? (cfg.strings.cameramic_required || 'Webcam and Microphone access are strictly required to enter this exam.')
+                    : (cfg.strings.camerablocked || 'Camera access is required.');
+                showGateError(err);
                 logEvent('camera_denied', 'high');
                 return;
             }
 
             // Virtual Camera Blacklist Inspection.
-            const track = videoTracks[0];
-            const trackLabel = (track.label || '').toLowerCase();
-            const blacklistedKeywords = [
-                'obs', 'virtual', 'manycam', 'v4l2loopback', 'splitcam',
-                'camo', 'droidcam', 'iriun', 'fake', 'software camera', 'e2esoft'
-            ];
-            const isVirtual = blacklistedKeywords.some(function(keyword) {
-                return trackLabel.indexOf(keyword) !== -1;
-            });
+            if (cfg.blockvirtualcamera) {
+                const track = videoTracks[0];
+                const trackLabel = (track.label || '').toLowerCase();
+                const blacklistedKeywords = [
+                    'obs', 'virtual', 'manycam', 'v4l2loopback', 'splitcam',
+                    'camo', 'droidcam', 'iriun', 'fake', 'software camera', 'e2esoft'
+                ];
+                const isVirtual = blacklistedKeywords.some(function(keyword) {
+                    return trackLabel.indexOf(keyword) !== -1;
+                });
 
-            if (isVirtual) {
-                mediaStream.getTracks().forEach(function(t) { t.stop(); });
-                stream = null;
-                cameraActive = false;
-                logEvent('virtual_camera_detected', 'high');
-                const errTemplate = cfg.strings.virtualcamerablocked || 'Virtual camera detected ({$a}). Virtual cameras are strictly prohibited.';
-                const errMsg = errTemplate.replace('{$a}', track.label || 'Virtual Device');
-                showCameraGate(false);
-                showGateError(errMsg);
-                return;
+                if (isVirtual) {
+                    mediaStream.getTracks().forEach(function(t) { t.stop(); });
+                    stream = null;
+                    cameraActive = false;
+                    logEvent('virtual_camera_detected', 'high');
+                    const errTemplate = cfg.strings.virtualcamerablocked || 'Virtual camera detected ({$a}). Virtual cameras are strictly prohibited.';
+                    const errMsg = errTemplate.replace('{$a}', track.label || 'Virtual Device');
+                    showCameraGate(false);
+                    showGateError(errMsg);
+                    return;
+                }
             }
 
             stream = mediaStream;
@@ -481,20 +493,27 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             videoTracks[0].onmute = function() {
                 handleCameraLost();
             };
-            audioTracks[0].onended = function() {
-                handleCameraLost();
-            };
-            audioTracks[0].onmute = function() {
-                handleCameraLost();
-            };
+            if (needMic && audioTracks.length) {
+                audioTracks[0].onended = function() {
+                    handleCameraLost();
+                };
+                audioTracks[0].onmute = function() {
+                    handleCameraLost();
+                };
+            }
 
             // Start audio speech / loud noise monitoring.
-            setupAudioSpeechDetection(mediaStream);
+            if (cfg.detectspeech && audioTracks.length) {
+                setupAudioSpeechDetection(mediaStream);
+            }
 
             startSnapshots();
         }).catch(function() {
             cameraActive = false;
-            showGateError(cfg.strings.cameramic_required || 'Webcam and Microphone access are strictly required to enter this exam.');
+            const errMsg = needMic
+                ? (cfg.strings.cameramic_required || 'Webcam and Microphone access are strictly required to enter this exam.')
+                : (cfg.strings.cameragate_denied || 'Camera access denied! You must allow camera access in browser permissions to take this exam.');
+            showGateError(errMsg);
             logEvent('camera_denied', 'high');
         });
     };
@@ -588,6 +607,9 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
      * Detect screenshot, print, and screen-clipping attempts.
      */
     const setupScreenshotDetection = function() {
+        if (!cfg.preventscreenshot) {
+            return;
+        }
         window.addEventListener('keyup', function(e) {
             if (e.key === 'PrintScreen' || e.keyCode === 44) {
                 try {
@@ -619,7 +641,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
      * @param {MediaStream} audioStream
      */
     const setupAudioSpeechDetection = function(audioStream) {
-        if (!audioStream || !audioStream.getAudioTracks().length) {
+        if (!cfg.detectspeech || !audioStream || !audioStream.getAudioTracks().length) {
             return;
         }
 

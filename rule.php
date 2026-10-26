@@ -128,6 +128,43 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
         $mform->addElement('selectyesno', 'liveproctoring_blocktabs',
             get_string('setting:blocktabs', 'quizaccess_liveproctoring'));
         $mform->setDefault('liveproctoring_blocktabs', 1);
+
+        // Require microphone along with webcam.
+        $mform->addElement('selectyesno', 'liveproctoring_requiremic',
+            get_string('setting:requiremic', 'quizaccess_liveproctoring'));
+        $mform->setDefault('liveproctoring_requiremic', 1);
+        $mform->disabledIf('liveproctoring_requiremic', 'liveproctoring_enablecamera', 'eq', '0');
+
+        // Detect speech and loud conversations.
+        $mform->addElement('selectyesno', 'liveproctoring_detectspeech',
+            get_string('setting:detectspeech', 'quizaccess_liveproctoring'));
+        $mform->setDefault('liveproctoring_detectspeech', 1);
+        $mform->disabledIf('liveproctoring_detectspeech', 'liveproctoring_enablecamera', 'eq', '0');
+
+        // Detect & block screenshot attempts.
+        $mform->addElement('selectyesno', 'liveproctoring_preventscreenshot',
+            get_string('setting:preventscreenshot', 'quizaccess_liveproctoring'));
+        $mform->setDefault('liveproctoring_preventscreenshot', 1);
+        $mform->disabledIf('liveproctoring_preventscreenshot', 'liveproctoring_enablecamera', 'eq', '0');
+
+        // Block OBS and virtual camera drivers.
+        $mform->addElement('selectyesno', 'liveproctoring_blockvirtualcamera',
+            get_string('setting:blockvirtualcamera', 'quizaccess_liveproctoring'));
+        $mform->setDefault('liveproctoring_blockvirtualcamera', 1);
+        $mform->disabledIf('liveproctoring_blockvirtualcamera', 'liveproctoring_enablecamera', 'eq', '0');
+
+        // Block extended or secondary monitors.
+        $mform->addElement('selectyesno', 'liveproctoring_blockmultiscreen',
+            get_string('setting:blockmultiscreen', 'quizaccess_liveproctoring'));
+        $mform->setDefault('liveproctoring_blockmultiscreen', 1);
+        $mform->disabledIf('liveproctoring_blockmultiscreen', 'liveproctoring_enablecamera', 'eq', '0');
+
+        // Reconnect grace period in seconds.
+        $mform->addElement('text', 'liveproctoring_reconnectgrace',
+            get_string('setting:reconnectgrace', 'quizaccess_liveproctoring'));
+        $mform->setType('liveproctoring_reconnectgrace', PARAM_INT);
+        $mform->setDefault('liveproctoring_reconnectgrace', 15);
+        $mform->disabledIf('liveproctoring_reconnectgrace', 'liveproctoring_enablecamera', 'eq', '0');
     }
 
     /**
@@ -154,6 +191,13 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
         $data->referencerequired  = !empty($quiz->liveproctoring_referencerequired) ? 1 : 0;
         $data->resolution         = !empty($quiz->liveproctoring_resolution)
             ? (int) $quiz->liveproctoring_resolution : 640;
+        $data->requiremic         = !empty($quiz->liveproctoring_requiremic) ? 1 : 0;
+        $data->detectspeech       = !empty($quiz->liveproctoring_detectspeech) ? 1 : 0;
+        $data->preventscreenshot  = !empty($quiz->liveproctoring_preventscreenshot) ? 1 : 0;
+        $data->blockvirtualcamera = !empty($quiz->liveproctoring_blockvirtualcamera) ? 1 : 0;
+        $data->blockmultiscreen   = !empty($quiz->liveproctoring_blockmultiscreen) ? 1 : 0;
+        $data->reconnectgrace     = !empty($quiz->liveproctoring_reconnectgrace)
+            ? (int) $quiz->liveproctoring_reconnectgrace : 15;
 
         if ($record) {
             $data->id = $record->id;
@@ -202,7 +246,13 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
              liveproctoring.showwatermark AS liveproctoring_showwatermark,
              liveproctoring.blocktabs AS liveproctoring_blocktabs,
              liveproctoring.resolution AS liveproctoring_resolution,
-             liveproctoring.referencerequired AS liveproctoring_referencerequired',
+             liveproctoring.referencerequired AS liveproctoring_referencerequired,
+             liveproctoring.requiremic AS liveproctoring_requiremic,
+             liveproctoring.detectspeech AS liveproctoring_detectspeech,
+             liveproctoring.preventscreenshot AS liveproctoring_preventscreenshot,
+             liveproctoring.blockvirtualcamera AS liveproctoring_blockvirtualcamera,
+             liveproctoring.blockmultiscreen AS liveproctoring_blockmultiscreen,
+             liveproctoring.reconnectgrace AS liveproctoring_reconnectgrace',
             'LEFT JOIN {quizaccess_liveproctoring_quiz} liveproctoring ON liveproctoring.quizid = quiz.id',
             [],
         ];
@@ -328,6 +378,12 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
             'showwatermark'    => (bool) ($settings->showwatermark ?? true),
             'blocktabs'        => (bool) ($settings->blocktabs ?? true),
             'enableai'         => (bool) ($settings->enableai ?? false),
+            'requiremic'       => !isset($settings->requiremic) || !empty($settings->requiremic),
+            'detectspeech'     => !isset($settings->detectspeech) || !empty($settings->detectspeech),
+            'preventscreenshot'=> !isset($settings->preventscreenshot) || !empty($settings->preventscreenshot),
+            'blockvirtualcamera'=> !isset($settings->blockvirtualcamera) || !empty($settings->blockvirtualcamera),
+            'blockmultiscreen' => !isset($settings->blockmultiscreen) || !empty($settings->blockmultiscreen),
+            'reconnectgrace'   => (int) ($settings->reconnectgrace ?? 15),
             'pushurl'          => (new moodle_url(
                 '/mod/quiz/accessrule/liveproctoring/push_snapshot.php'
             ))->out(false),

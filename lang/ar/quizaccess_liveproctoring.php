@@ -31,14 +31,19 @@ $string['plugindescription'] = 'يراقب الطلاب أثناء الامتح�
 $string['setting:enablecamera'] = 'تفعيل مراقبة الكاميرا';
 $string['setting:enableai'] = 'تفعيل تحليل الذكاء الاصطناعي';
 $string['setting:snapshotinterval'] = 'الفترة بين اللقطات (بالثواني)';
-$string['setting:resolution'] = 'Webcam resolution (width in px)';
-$string['setting:referencerequired'] = 'Require identity verification (reference photo)';
-$string['task:analyzesnapshots'] = 'Analyze pending proctoring snapshots with AI';
-$string['setting:resolution'] = 'Webcam resolution (width in px)';
+$string['setting:resolution'] = 'دقة كاميرا الويب (العرض بالبكسل)';
+$string['setting:referencerequired'] = 'إلزامية التحقق من الهوية (صورة مرجعية قبل الاختبار)';
+$string['task:analyzesnapshots'] = 'تحليل لقطات المراقبة المعلقة بالذكاء الاصطناعي';
 $string['setting:warninglimit'] = 'الحد الأقصى للتحذيرات';
 $string['setting:autosubmit'] = 'التسليم التلقائي عند بلوغ الحد';
 $string['setting:showwatermark'] = 'عرض العلامة المائية باسم الطالب';
 $string['setting:blocktabs'] = 'التحذير عند تبديل النافذة';
+$string['setting:requiremic'] = 'إلزامية تشغيل الميكروفون مع الكاميرا';
+$string['setting:detectspeech'] = 'رصد التحدث والأصوات المرتفعة';
+$string['setting:preventscreenshot'] = 'حظر ورصد لقطات الشاشة والطباعة ومسح الحافظة';
+$string['setting:blockvirtualcamera'] = 'حظر الكاميرات الوهمية وبرامج البث (OBS / V4L2)';
+$string['setting:blockmultiscreen'] = 'حظر استخدام شاشات عرض متعددة أو شاشات ممتدة';
+$string['setting:reconnectgrace'] = 'مهلة استعادة الكاميرا بالثواني قبل الطرد التلقائي';
 
 // إعدادات المشرف.
 $string['setting:aiapiurl'] = 'عنوان URL لـ AI API';

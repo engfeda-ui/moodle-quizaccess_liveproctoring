@@ -38,6 +38,12 @@ $string['setting:warninglimit'] = 'Maximum warnings before action';
 $string['setting:autosubmit'] = 'Auto-submit on warning limit';
 $string['setting:showwatermark'] = 'Show student name watermark';
 $string['setting:blocktabs'] = 'Warn on tab/window switch';
+$string['setting:requiremic'] = 'Require microphone along with webcam';
+$string['setting:detectspeech'] = 'Detect speech and loud conversations';
+$string['setting:preventscreenshot'] = 'Detect & block screenshot / print';
+$string['setting:blockvirtualcamera'] = 'Block virtual cameras & OBS drivers';
+$string['setting:blockmultiscreen'] = 'Block multiple displays / secondary monitors';
+$string['setting:reconnectgrace'] = 'Camera reconnect grace period (seconds)';
 
 // Global admin settings.
 $string['setting:aiapiurl'] = 'AI API endpoint URL';

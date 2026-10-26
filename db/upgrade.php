@@ -91,5 +91,24 @@ function xmldb_quizaccess_liveproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026102602, 'quizaccess', 'liveproctoring');
     }
 
+    if ($oldversion < 2026102624) {
+        $quiztable = new xmldb_table('quizaccess_liveproctoring_quiz');
+        $newfields = [
+            new xmldb_field('requiremic', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1'),
+            new xmldb_field('detectspeech', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1'),
+            new xmldb_field('preventscreenshot', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1'),
+            new xmldb_field('blockvirtualcamera', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1'),
+            new xmldb_field('blockmultiscreen', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1'),
+            new xmldb_field('reconnectgrace', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '15'),
+        ];
+        foreach ($newfields as $field) {
+            if ($dbman->table_exists($quiztable) && !$dbman->field_exists($quiztable, $field)) {
+                $dbman->add_field($quiztable, $field);
+            }
+        }
+        upgrade_plugin_savepoint(true, 2026102624, 'quizaccess', 'liveproctoring');
+    }
+
     return true;
 }
+

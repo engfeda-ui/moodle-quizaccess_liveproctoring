@@ -70,6 +70,12 @@
         <FIELD NAME="resolution" TYPE="int" LENGTH="5" NOTNULL="true" DEFAULT="640" COMMENT="Preferred webcam resolution (width)"/>
         <FIELD NAME="showwatermark" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"/>
         <FIELD NAME="blocktabs" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" COMMENT="Warn on tab switch"/>
+        <FIELD NAME="requiremic" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" COMMENT="Require microphone along with webcam"/>
+        <FIELD NAME="detectspeech" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" COMMENT="Detect speech and loud conversations"/>
+        <FIELD NAME="preventscreenshot" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" COMMENT="Detect and block screenshot attempts"/>
+        <FIELD NAME="blockvirtualcamera" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" COMMENT="Block OBS and virtual camera drivers"/>
+        <FIELD NAME="blockmultiscreen" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" COMMENT="Block extended or secondary monitors"/>
+        <FIELD NAME="reconnectgrace" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="15" COMMENT="Seconds before ejection on camera disconnect"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

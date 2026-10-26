@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.23-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.24-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -50,10 +50,19 @@ An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_
 - **Enable Camera Proctoring**: Yes / No
 - **Enable AI Analysis**: Yes / No
 - **Snapshot Interval**: Time between webcam frames in seconds (default: 30)
+- **Webcam Resolution**: Width in pixels (default: 640)
+- **Require Identity Verification**: Reference photo before exam (Yes / No)
 - **Warning Limit**: Maximum warnings before auto-submission (default: 3)
 - **Auto-Submit on Warning Limit**: Yes / No
 - **Show Student Watermark**: Yes / No
 - **Warn on Tab Switch**: Yes / No
+- **Require Microphone along with Webcam**: Yes / No (default: Yes)
+- **Detect Speech & Loud Conversations**: Yes / No (default: Yes)
+- **Detect & Block Screenshot / Print**: Yes / No (default: Yes)
+- **Block Virtual Cameras & OBS Drivers**: Yes / No (default: Yes)
+- **Block Multiple Displays / Secondary Monitors**: Yes / No (default: Yes)
+- **Camera Reconnection Grace Period**: Reconnection timeout in seconds before auto-ejection (default: 15s)
+
 
 ---
 
@@ -90,6 +99,22 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.24 (Build `2026102624`) — 2026-10-26
+- **Granular Security Controls & Custom Assessment Configuration Suite:**
+  - **Comprehensive Security Form Controls (`rule.php`, `db/install.xml`, `db/upgrade.php`)**:
+    - Added 6 granular per-quiz toggle settings to Moodle Quiz Edit form allowing instructors to fine-tune proctoring posture:
+      1. `requiremic`: Enforce microphone access along with camera (Yes/No).
+      2. `detectspeech`: Toggle acoustic speech & conversation detection (Yes/No).
+      3. `preventscreenshot`: Toggle screenshot, PrintScreen, Print (Ctrl+P), and snipping defense (Yes/No).
+      4. `blockvirtualcamera`: Toggle virtual camera (OBS, ManyCam, V4L2) driver blocking (Yes/No).
+      5. `blockmultiscreen`: Toggle secondary & extended monitor detection (Yes/No).
+      6. `reconnectgrace`: Configurable reconnection grace period countdown (seconds) before server-side ejection.
+  - **Dynamic Client Enforcement (`amd/src/proctoring_student.js`)**:
+    - Hooked all 6 settings into client runtime: conditionally acquires audio, dynamically enables/bypasses multi-monitor and screenshot listeners, checks virtual camera blacklist only if active, and synchronizes the countdown timer to `reconnectgrace`.
+  - **Full Database Migration & Language Parity**:
+    - Automated XMLDB migration for `quizaccess_liveproctoring_quiz` table on upgrade.
+    - 100% Arabic & English language pack parity (106 keys) and passed security audit tests.
 
 ### 🌟 v1.0.23 (Build `2026102623`) — 2026-10-26
 - **Strict Camera & Mic Gate, Breach Evidence Snapshots, Incident Video Recording & Post-Exam Media Player:**
