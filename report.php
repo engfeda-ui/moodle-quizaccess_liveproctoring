@@ -173,37 +173,155 @@ if (has_capability('quizaccess/liveproctoring:deletesnapshots', $context)) {
 if ($userid > 0) {
     $targetuser = $DB->get_record('user', ['id' => $userid]);
     if ($targetuser) {
+        echo html_writer::tag('hr', '', ['class' => 'my-4']);
+        echo $OUTPUT->heading(fullname($targetuser) . ' (' . $targetuser->username . ')', 2);
+
+        // 1. Evidence Video Clips.
+        $fs = get_file_storage();
+        $userattempts = $DB->get_records('quiz_attempts', ['quiz' => $quizid, 'userid' => $userid], 'attempt ASC');
+        $evidencefiles = [];
+        foreach ($userattempts as $uatt) {
+            $files = $fs->get_area_files($context->id, 'quizaccess_liveproctoring', 'evidence_videos', $uatt->id, 'timecreated DESC', false);
+            foreach ($files as $f) {
+                $evidencefiles[] = ['file' => $f, 'attempt' => $uatt];
+            }
+        }
+
+        echo $OUTPUT->heading('🎬 ' . get_string('evidence_videos', 'quizaccess_liveproctoring'), 3);
+        if (!empty($evidencefiles)) {
+            echo html_writer::start_tag('div', ['class' => 'row g-3 my-2']);
+            foreach ($evidencefiles as $item) {
+                $f = $item['file'];
+                $att = $item['attempt'];
+                $videourl = moodle_url::make_pluginfile_url(
+                    $context->id,
+                    'quizaccess_liveproctoring',
+                    'evidence_videos',
+                    $att->id,
+                    '/',
+                    $f->get_filename()
+                );
+                $filesize = round($f->get_filesize() / 1048576, 2);
+
+                echo html_writer::start_tag('div', ['class' => 'col-md-6 col-lg-4']);
+                echo html_writer::start_tag('div', ['class' => 'card h-100 shadow-sm border-danger']);
+                echo html_writer::start_tag('div', ['class' => 'card-body p-3']);
+                echo html_writer::tag('div',
+                    html_writer::tag('strong', '📹 مقطع إثبات رسمي (المحاولة ' . $att->attempt . ')') .
+                    html_writer::tag('span', 'دليل خرق', ['class' => 'badge bg-danger float-end']),
+                    ['class' => 'mb-2']
+                );
+                echo html_writer::tag('video', '', [
+                    'src'      => $videourl->out(false),
+                    'controls' => 'controls',
+                    'style'    => 'width:100%;max-height:240px;background:#000;border-radius:6px;',
+                ]);
+                echo html_writer::tag('div',
+                    html_writer::tag('small', '📅 ' . userdate($f->get_timecreated()) . ' | 💾 ' . $filesize . ' MB', ['class' => 'text-muted']),
+                    ['class' => 'mt-2 text-center']
+                );
+                echo html_writer::end_tag('div');
+                echo html_writer::end_tag('div');
+                echo html_writer::end_tag('div');
+            }
+            echo html_writer::end_tag('div');
+        } else {
+            echo html_writer::tag('div',
+                get_string('no_evidence_videos', 'quizaccess_liveproctoring'),
+                ['class' => 'alert alert-light border text-muted my-2']
+            );
+        }
+
+        // 2. Breach & Security Events Log.
+        $events = $DB->get_records_sql(
+            "SELECT e.*
+               FROM {quizaccess_liveproctoring_events} e
+              WHERE e.cmid = :cmid AND e.userid = :userid
+           ORDER BY e.timecreated DESC",
+            ['cmid' => $cmid, 'userid' => $userid]
+        );
+
+        echo $OUTPUT->heading('🚨 ' . get_string('breach_events', 'quizaccess_liveproctoring'), 3);
+        if (!empty($events)) {
+            $eventlabels = [
+                'screenshot_attempt'        => '📸 التقاط صورة للشاشة (Screenshot)',
+                'speaking_detected'         => '🗣️ تحدث / أصوات مرتفعة',
+                'tab_switch'                => '⚠️ تبديل نافذة / مغادرة صفحة الامتحان',
+                'camera_blocked'            => '❌ انقطاع أو حجب الكاميرا',
+                'camera_denied'             => '❌ رفض إذن الكاميرا أو المايك',
+                'camera_lost'               => '⚠️ فقدان إشارة الكاميرا',
+                'virtual_camera_detected'   => '🚫 استخدام كاميرا وهمية (Virtual Camera)',
+                'multi_monitor_detected'    => '🖥️ استخدام شاشات متعددة (Multi-Monitor)',
+                'force_terminated'          => '🚪 إنهاء وطرد إجباري من المراقب',
+                'proctor_recording'         => '🎬 تسجيل مقطع إثبات فيديو بواسطة المراقب',
+                'teacher_warning'           => '📢 إنذار مباشر من المراقب',
+                'auto_submitted'            => '🔒 تسليم تلقائي لتجاوز حد المخالفات',
+                'identity_mismatch'         => '👤 عدم تطابق هوية الطالب',
+                'multi_face'                => '👥 ظهور أكثر من شخص أمام الكاميرا',
+                'ai_alert'                  => '🤖 تنبيه سلوك مشبوه من الذكاء الاصطناعي',
+            ];
+
+            echo html_writer::start_tag('table', ['class' => 'table table-hover table-bordered my-2']);
+            echo html_writer::start_tag('thead', ['class' => 'table-dark']);
+            echo html_writer::tag('tr',
+                html_writer::tag('th', 'نوع الحدث / المخالفة') .
+                html_writer::tag('th', 'مستوى الخطورة') .
+                html_writer::tag('th', 'رقم الإنذار') .
+                html_writer::tag('th', 'التفاصيل / الملاحظة') .
+                html_writer::tag('th', 'الوقت')
+            );
+            echo html_writer::end_tag('thead');
+            echo html_writer::start_tag('tbody');
+            foreach ($events as $ev) {
+                $evlabel = $eventlabels[$ev->eventtype] ?? $ev->eventtype;
+                $sevbadge = $ev->severity === 'high' ? 'bg-danger' : ($ev->severity === 'medium' ? 'bg-warning text-dark' : 'bg-secondary');
+
+                echo html_writer::tag('tr',
+                    html_writer::tag('td', '<strong>' . s($evlabel) . '</strong>') .
+                    html_writer::tag('td', html_writer::tag('span', strtoupper($ev->severity), ['class' => 'badge ' . $sevbadge])) .
+                    html_writer::tag('td', (int) $ev->warningcount) .
+                    html_writer::tag('td', s($ev->message)) .
+                    html_writer::tag('td', userdate($ev->timecreated, '%Y-%m-%d %H:%M:%S'))
+                );
+            }
+            echo html_writer::end_tag('tbody');
+            echo html_writer::end_tag('table');
+        } else {
+            echo html_writer::tag('div', 'لا توجد مخالفات أمنية مسجلة لهذا الطالب.', ['class' => 'alert alert-success my-2']);
+        }
+
+        // 3. Snapshots Gallery.
         $snaps = $DB->get_records('quizaccess_liveproctoring_snaps',
             ['quizid' => $quizid, 'userid' => $userid],
             'timecreated ASC'
         );
 
-        echo $OUTPUT->heading(fullname($targetuser) . ' — Snapshots', 3);
+        echo $OUTPUT->heading('📷 لقطات الكاميرا الدورية والخرقية (' . count($snaps) . ')', 3);
+        echo html_writer::start_tag('div', ['class' => 'd-flex flex-wrap gap-3 mt-3']);
+        foreach ($snaps as $snap) {
+            if (empty($snap->thumbdata)) {
+                continue;
+            }
+            $risk = (int) $snap->risk_score;
+            $borderclass = $risk >= 70 ? 'border-danger' : ($risk >= 40 ? 'border-warning' : 'border-success');
 
-    echo html_writer::start_tag('div', ['class' => 'd-flex flex-wrap gap-3 mt-3']);
-    foreach ($snaps as $snap) {
-        if (empty($snap->thumbdata)) {
-            continue;
+            echo html_writer::tag('div',
+                html_writer::tag('img', '', [
+                    'src'   => $snap->thumbdata,
+                    'style' => 'width:140px;border-radius:6px;',
+                    'class' => 'border border-3 ' . $borderclass,
+                    'title' => 'Risk: ' . $risk . ' | ' . userdate($snap->timecreated),
+                ]) .
+                html_writer::tag('div',
+                    (!empty($snap->suspicious) ? html_writer::tag('span', '🚨 لقطة خرق', ['class' => 'badge bg-danger d-block mb-1']) : '') .
+                    html_writer::tag('small', 'Risk: ' . ($risk >= 0 ? $risk : '—') . '/100', ['class' => 'text-muted']) .
+                    html_writer::tag('br', '') .
+                    html_writer::tag('small', userdate($snap->timecreated, '%H:%M:%S'), ['class' => 'text-muted']),
+                    ['class' => 'text-center mt-1']
+                ),
+                ['class' => 'text-center']
+            );
         }
-        $risk = (int) $snap->risk_score;
-        $borderclass = $risk >= 70 ? 'border-danger' : ($risk >= 40 ? 'border-warning' : 'border-success');
-
-        echo html_writer::tag('div',
-            html_writer::tag('img', '', [
-                'src'   => $snap->thumbdata,
-                'style' => 'width:140px;border-radius:6px;',
-                'class' => 'border border-3 ' . $borderclass,
-                'title' => 'Risk: ' . $risk . ' | ' . userdate($snap->timecreated),
-            ]) .
-            html_writer::tag('div',
-                html_writer::tag('small', 'Risk: ' . ($risk >= 0 ? $risk : '—') . '/100', ['class' => 'text-muted']) .
-                html_writer::tag('br', '') .
-                html_writer::tag('small', userdate($snap->timecreated, '%H:%M:%S'), ['class' => 'text-muted']),
-                ['class' => 'text-center mt-1']
-            ),
-            ['class' => 'text-center']
-        );
-    }
         echo html_writer::end_tag('div');
     }
 }

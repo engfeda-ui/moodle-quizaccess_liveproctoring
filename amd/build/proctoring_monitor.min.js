@@ -61,6 +61,21 @@ define([], function() {
     /** @type {number|null} requestAnimationFrame ID for VU meter */
     let vuAnimFrame = null;
 
+    /** @type {MediaRecorder|null} MediaRecorder for on-demand clip recording */
+    let mediaRecorder = null;
+
+    /** @type {Array<Blob>} Recorded video chunks */
+    let recordedChunks = [];
+
+    /** @type {boolean} Whether video clip recording is active */
+    let isRecordingClip = false;
+
+    /** @type {number|null} Interval timer for recording counter */
+    let recordTimer = null;
+
+    /** @type {number} Elapsed seconds for current recording */
+    let recordSeconds = 0;
+
     /**
      * Initialise the monitor.
      *
@@ -574,6 +589,154 @@ define([], function() {
                 }
             });
         }
+
+        const recordBtn = document.getElementById('lp-spotlight-record-clip');
+        if (recordBtn) {
+            recordBtn.addEventListener('click', toggleClipRecording);
+        }
+    };
+
+    /**
+     * Start or stop on-demand video & audio evidence recording.
+     */
+    const toggleClipRecording = function() {
+        if (!activeSpotlight) {
+            return;
+        }
+
+        const videoElem = document.getElementById('lp-spotlight-video');
+        const recordBtn = document.getElementById('lp-spotlight-record-clip');
+        const iconSpan = document.getElementById('lp-record-icon');
+        const labelSpan = document.getElementById('lp-record-btn-label');
+        const timerSpan = document.getElementById('lp-record-timer');
+
+        if (!isRecordingClip) {
+            // Verify video stream is active.
+            if (!videoElem || !videoElem.srcObject) {
+                alert('WebRTC video stream is not active yet. Please wait for the student stream to connect.');
+                return;
+            }
+
+            const streamToRecord = videoElem.srcObject;
+            let mimeType = 'video/webm;codecs=vp8,opus';
+            if (typeof MediaRecorder.isTypeSupported === 'function' && !MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'video/webm';
+            }
+
+            recordedChunks = [];
+            try {
+                mediaRecorder = new MediaRecorder(streamToRecord, { mimeType: mimeType });
+            } catch (err) {
+                try {
+                    mediaRecorder = new MediaRecorder(streamToRecord);
+                } catch (e) {
+                    alert('Browser does not support MediaRecorder for this stream.');
+                    return;
+                }
+            }
+
+            mediaRecorder.ondataavailable = function(e) {
+                if (e.data && e.data.size > 0) {
+                    recordedChunks.push(e.data);
+                }
+            };
+
+            const attemptIdForClip = activeSpotlight.attemptid;
+            mediaRecorder.onstop = function() {
+                if (recordedChunks.length === 0) {
+                    return;
+                }
+                const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/webm' });
+                const formData = new FormData();
+                formData.append('cmid', cfg.cmid);
+                formData.append('quizid', cfg.quizid);
+                formData.append('attemptid', attemptIdForClip);
+                formData.append('sesskey', cfg.sesskey);
+                formData.append('video', blob, 'evidence_' + attemptIdForClip + '_' + Date.now() + '.webm');
+
+                const uploadUrl = cfg.uploadurl || (cfg.signalurl.replace('live_signal.php', 'upload_evidence.php'));
+                fetch(uploadUrl, {
+                    method: 'POST',
+                    body: formData,
+                }).then(function(r) {
+                    return r.json();
+                }).then(function(data) {
+                    if (data && data.success) {
+                        alert(cfg.strings.clip_saved || 'Incident video evidence recorded and saved successfully!');
+                    } else {
+                        alert('Evidence upload failed: ' + (data.error || 'Server error'));
+                    }
+                }).catch(function() {
+                    alert('Network error while saving video evidence.');
+                });
+            };
+
+            mediaRecorder.start(1000);
+            isRecordingClip = true;
+            recordSeconds = 0;
+
+            if (recordBtn) {
+                recordBtn.className = 'btn btn-sm btn-danger text-white';
+            }
+            if (iconSpan) {
+                iconSpan.textContent = '⏹️';
+            }
+            if (labelSpan) {
+                labelSpan.textContent = cfg.strings.stop_record_clip || 'Stop & Save Evidence';
+            }
+            if (timerSpan) {
+                timerSpan.style.display = 'inline-block';
+                timerSpan.textContent = '00:00';
+            }
+
+            if (recordTimer) {
+                clearInterval(recordTimer);
+            }
+            recordTimer = setInterval(function() {
+                recordSeconds++;
+                const mins = String(Math.floor(recordSeconds / 60)).padStart(2, '0');
+                const secs = String(recordSeconds % 60).padStart(2, '0');
+                if (timerSpan) {
+                    timerSpan.textContent = mins + ':' + secs;
+                }
+            }, 1000);
+
+        } else {
+            stopClipRecording();
+        }
+    };
+
+    /**
+     * Stop active clip recording and reset UI buttons.
+     */
+    const stopClipRecording = function() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            try { mediaRecorder.stop(); } catch (e) {}
+        }
+        isRecordingClip = false;
+
+        if (recordTimer) {
+            clearInterval(recordTimer);
+            recordTimer = null;
+        }
+
+        const recordBtn = document.getElementById('lp-spotlight-record-clip');
+        const iconSpan = document.getElementById('lp-record-icon');
+        const labelSpan = document.getElementById('lp-record-btn-label');
+        const timerSpan = document.getElementById('lp-record-timer');
+
+        if (recordBtn) {
+            recordBtn.className = 'btn btn-sm btn-outline-danger';
+        }
+        if (iconSpan) {
+            iconSpan.textContent = '🔴';
+        }
+        if (labelSpan) {
+            labelSpan.textContent = cfg.strings.record_clip || 'Record Evidence Clip';
+        }
+        if (timerSpan) {
+            timerSpan.style.display = 'none';
+        }
     };
 
     /**
@@ -884,6 +1047,10 @@ define([], function() {
     const closeSpotlight = function() {
         if (!activeSpotlight) {
             return;
+        }
+
+        if (isRecordingClip) {
+            stopClipRecording();
         }
 
         const modal = document.getElementById('lp-spotlight-modal');

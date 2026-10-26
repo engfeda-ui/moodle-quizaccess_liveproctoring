@@ -355,6 +355,10 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
                 'virtualcamerablocked' => get_string('virtualcamerablocked', 'quizaccess_liveproctoring', ''),
                 'multimonitorwarning'  => get_string('multimonitorwarning', 'quizaccess_liveproctoring'),
                 'ejectedmessage'       => get_string('ejectedmessage', 'quizaccess_liveproctoring'),
+                'cameramic_required'   => get_string('cameramic_required', 'quizaccess_liveproctoring'),
+                'screenshot_detected'  => get_string('screenshot_detected', 'quizaccess_liveproctoring'),
+                'speaking_detected'    => get_string('speaking_detected', 'quizaccess_liveproctoring'),
+                'face_disappeared'     => get_string('face_disappeared', 'quizaccess_liveproctoring'),
             ],
         ];
 

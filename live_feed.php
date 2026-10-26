@@ -104,7 +104,10 @@ while ((time() - $starttime) < $maxruntime) {
                 COUNT(*) AS total_events,
                 SUM(CASE WHEN severity = 'high' THEN 1 ELSE 0 END) AS high_count,
                 SUM(CASE WHEN severity = 'medium' THEN 1 ELSE 0 END) AS med_count,
-                SUM(CASE WHEN eventtype = 'tab_switch' THEN 1 ELSE 0 END) AS tab_count,
+                SUM(CASE WHEN eventtype = 'tab_switch' OR eventtype LIKE 'breach_tab%' THEN 1 ELSE 0 END) AS tab_count,
+                SUM(CASE WHEN eventtype IN ('screenshot_attempt', 'breach_screenshot_attempt') THEN 1 ELSE 0 END) AS screenshot_count,
+                SUM(CASE WHEN eventtype IN ('speaking_detected', 'breach_speaking_detected') THEN 1 ELSE 0 END) AS speech_count,
+                SUM(CASE WHEN eventtype IN ('virtual_camera_detected', 'breach_virtual_camera_detected') THEN 1 ELSE 0 END) AS virtual_cam_count,
                 SUM(CASE WHEN eventtype IN ('camera_blocked', 'camera_denied', 'camera_lost') THEN 1 ELSE 0 END) AS cam_issues,
                 MAX(timecreated) AS last_event_time
            FROM {quizaccess_liveproctoring_events}
@@ -123,20 +126,28 @@ while ((time() - $starttime) < $maxruntime) {
         $airisk = isset($row->risk_score) && $row->risk_score >= 0 ? (int) $row->risk_score : 0;
 
         // Calculate dynamic behavioral risk.
-        $tabcount  = $ev ? (int) $ev->tab_count : 0;
-        $camissues = $ev ? (int) $ev->cam_issues : 0;
-        $highcount = $ev ? (int) $ev->high_count : 0;
-        $medcount  = $ev ? (int) $ev->med_count : 0;
+        $tabcount        = $ev ? (int) $ev->tab_count : 0;
+        $camissues       = $ev ? (int) $ev->cam_issues : 0;
+        $screenshotcount = $ev ? (int) $ev->screenshot_count : 0;
+        $speechcount     = $ev ? (int) $ev->speech_count : 0;
+        $virtualcamcount = $ev ? (int) $ev->virtual_cam_count : 0;
+        $highcount       = $ev ? (int) $ev->high_count : 0;
+        $medcount        = $ev ? (int) $ev->med_count : 0;
 
-        // 1 tab switch = 35% (Warning), 2 tab switches = 70% (High Risk), camera blocked = 75% (High Risk).
-        $behaviorrisk = ($tabcount * 35) + ($camissues * 75) + ($highcount > 0 ? 20 : 0) + ($medcount * 10);
+        $behaviorrisk = ($tabcount * 35) + ($camissues * 75) + ($screenshotcount * 50) + ($speechcount * 40) + ($virtualcamcount * 80) + ($highcount > 0 ? 20 : 0) + ($medcount * 10);
         $totalrisk = min(100, max($airisk, $behaviorrisk));
 
-        $issuspicious = ($totalrisk >= 70 || !empty($row->suspicious) || $camissues > 0 || $tabcount >= 2);
+        $issuspicious = ($totalrisk >= 70 || !empty($row->suspicious) || $camissues > 0 || $tabcount >= 2 || $screenshotcount > 0 || $virtualcamcount > 0);
 
         // Status message displayed under risk score.
-        if ($camissues > 0) {
+        if ($virtualcamcount > 0) {
+            $statusmsg = 'كاميرا وهمية محظورة 🚫';
+        } else if ($camissues > 0) {
             $statusmsg = 'الكاميرا محجوبة / مغلقة ❌';
+        } else if ($screenshotcount > 0) {
+            $statusmsg = "التقاط شاشة ({$screenshotcount}) 📸";
+        } else if ($speechcount > 0) {
+            $statusmsg = "تحدث / صوت مرصود 🗣️";
         } else if ($tabcount > 0) {
             $statusmsg = "تبديل نافذة ({$tabcount}) ⚠️";
         } else if (!$hasthumb) {
@@ -184,7 +195,7 @@ while ((time() - $starttime) < $maxruntime) {
            FROM {quizaccess_liveproctoring_events} e
            JOIN {user} u ON u.id = e.userid
           WHERE e.cmid = :cmid
-            AND e.severity = 'high'
+            AND (e.severity = 'high' OR e.eventtype IN ('screenshot_attempt', 'speaking_detected', 'tab_switch', 'virtual_camera_detected', 'camera_blocked', 'face_disappeared', 'multi_face'))
             AND e.timecreated >= :since
           ORDER BY e.timecreated DESC
           LIMIT 10",

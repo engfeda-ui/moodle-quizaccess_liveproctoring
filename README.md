@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.22-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.23-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,25 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.23 (Build `2026102623`) — 2026-10-26
+- **Strict Camera & Mic Gate, Breach Evidence Snapshots, Incident Video Recording & Post-Exam Media Player:**
+  - **Mandatory Camera & Microphone Hard Gate (`amd/src/proctoring_student.js`)**:
+    - Completely removed video-only fallback; access to both physical webcam AND microphone is now strictly enforced without exception.
+    - If either device is missing, denied, or disconnected during the exam, full-screen blocking gate activates immediately with a 15-second countdown to automatic server-side ejection.
+  - **Comprehensive Multi-Vector Breach Detection & Real-Time Alerts (`amd/src/proctoring_student.js`, `live_feed.php`)**:
+    - **Screenshot & Print Interception**: Detects `PrintScreen`, `Ctrl+P`, and snipping tool shortcuts (`Ctrl+Shift+S`), immediately clearing system clipboard and flagging `screenshot_attempt`.
+    - **Acoustic Speech & Conversation Detection**: Integrated real-time Web Audio API frequency analysis on the student's microphone stream, detecting sustained talking or whispering and flagging `speaking_detected`.
+    - **Instant Breach Snapshots**: Automatically captures and uploads a high-resolution camera snapshot at the exact millisecond of any violation, permanently tagging it as evidence.
+    - **Proctor Alert Stream**: Live Monitor immediately chimes, flashes student cards in red, and presents real-time violation badges (`التقاط شاشة 📸`, `تحدث / صوت مرصود 🗣️`, `تبديل نافذة ⚠️`, `الكاميرا محجوبة / مغلقة ❌`).
+  - **On-Demand Incident Video & Audio Clip Recording (`templates/monitor_dashboard.mustache`, `amd/src/proctoring_monitor.js`, `upload_evidence.php`)**:
+    - Added `🔴 Record Evidence Clip` button inside the Spotlight Live Stream modal with live elapsed recording timer.
+    - Captures high-definition `.webm` video and audio directly from the student's WebRTC stream and uploads it to Moodle File Storage (`evidence_videos` filearea) as legal/academic integrity proof.
+  - **Integrated Post-Exam Media Player & Breach Log Suite (`report.php`, `lib.php`)**:
+    - Added dedicated HTML5 video player gallery in post-exam report to review recorded incident video clips with timestamps and file sizes.
+    - Added comprehensive **Breach & Security Events Log** table detailing all violations, severities, warnings, and timestamps.
+    - Snapshots gallery enhanced with prominent `🚨 لقطة خرق` badges on violation frames.
+  - **100% Arabic & English Parity**: Verified language parity across 100 localized keys and zero security vulnerabilities.
 
 ### 🌟 v1.0.22 (Build `2026102622`) — 2026-10-26
 - **Audio Intercom, Adaptive Bitrate & Classroom Partitioning (Phase 3 & Proposals Roadmap):**

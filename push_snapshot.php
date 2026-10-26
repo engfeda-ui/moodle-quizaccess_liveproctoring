@@ -51,6 +51,7 @@ $cmid      = required_param('cmid',      PARAM_INT);
 $quizid    = required_param('quizid',    PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $imagedata = required_param('image',     PARAM_RAW); // base64 data URI
+$breach    = optional_param('breach', '', PARAM_ALPHANUMEXT);
 
 // Context and capability check.
 $context = context_module::instance($cmid, MUST_EXIST);
@@ -185,16 +186,27 @@ $snaprecord->attemptid     = $attemptid;
 $snaprecord->fileid        = $storedfile->get_id();
 $snaprecord->thumbdata     = $thumbdata;
 $snaprecord->ai_result     = json_encode($airesult);
-$snaprecord->risk_score    = (int) ($airesult['risk_score'] ?? -1);
+$snaprecord->risk_score    = !empty($breach) ? 85 : (int) ($airesult['risk_score'] ?? -1);
 $snaprecord->face_detected = (int) ($airesult['face_detected'] ?? 0);
 $snaprecord->face_count    = (int) ($airesult['face_count'] ?? 0);
-$snaprecord->suspicious    = (int) ($airesult['suspicious'] ?? 0);
+$snaprecord->suspicious    = !empty($breach) ? 1 : (int) ($airesult['suspicious'] ?? 0);
 $snaprecord->timecreated   = $now;
 
 $DB->insert_record('quizaccess_liveproctoring_snaps', $snaprecord);
 
 // --- Log suspicious events ---
-if (!empty($airesult['suspicious']) || (!empty($airesult['face_detected']) && $airesult['face_count'] > 1)) {
+if (!empty($breach)) {
+    $event = new stdClass();
+    $event->userid       = $USER->id;
+    $event->cmid         = $cmid;
+    $event->attemptid    = $attemptid;
+    $event->eventtype    = substr($breach, 0, 50);
+    $event->severity     = 'high';
+    $event->warningcount = 1;
+    $event->message      = 'Breach snapshot captured (' . $breach . ')';
+    $event->timecreated  = $now;
+    $DB->insert_record('quizaccess_liveproctoring_events', $event);
+} else if (!empty($airesult['suspicious']) || (!empty($airesult['face_detected']) && $airesult['face_count'] > 1)) {
     $event = new stdClass();
     $event->userid      = $USER->id;
     $event->cmid        = $cmid;
@@ -213,4 +225,5 @@ echo json_encode([
     'risk_score'   => $snaprecord->risk_score,
     'suspicious'   => (bool) $snaprecord->suspicious,
     'face_detected'=> (bool) $snaprecord->face_detected,
+    'face_count'   => (int) $snaprecord->face_count,
 ]);

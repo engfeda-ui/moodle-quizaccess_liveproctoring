@@ -104,6 +104,17 @@ $string['studentaudio'] = 'Student Audio';
 $string['audiomuted'] = 'Audio: Muted';
 $string['audiounmuted'] = 'Audio: Active';
 $string['classroom'] = 'Classroom / Group';
+$string['record_clip'] = 'Record Evidence Clip';
+$string['recording_clip'] = 'Recording Evidence';
+$string['stop_record_clip'] = 'Stop & Save Evidence';
+$string['clip_saved'] = 'Incident video evidence recorded and saved successfully!';
+$string['evidence_videos'] = 'Recorded Evidence Video Clips';
+$string['no_evidence_videos'] = 'No evidence video clips recorded for this student.';
+$string['breach_events'] = 'Breach & Security Events Log';
+$string['screenshot_detected'] = 'Screenshot Attempt Detected';
+$string['speaking_detected'] = 'Speech or loud conversation detected';
+$string['face_disappeared'] = 'Student face not detected in frame';
+$string['cameramic_required'] = 'Webcam and Microphone access are strictly required to enter this exam.';
 
 // Capabilities.
 $string['liveproctoring:viewmonitor'] = 'View live proctoring monitor';

@@ -45,7 +45,7 @@ function quizaccess_liveproctoring_pluginfile($course, $cm, $context, $filearea,
 
     require_login($course, false, $cm);
 
-    if ($filearea !== 'snapshots') {
+    if ($filearea !== 'snapshots' && $filearea !== 'evidence_videos') {
         return false;
     }
 
@@ -56,9 +56,16 @@ function quizaccess_liveproctoring_pluginfile($course, $cm, $context, $filearea,
         return false;
     }
 
-    // Only allow .jpg files.
-    if (!preg_match('/^snap_\d+_\d+\.jpg$/', $filename)) {
-        return false;
+    if ($filearea === 'snapshots') {
+        // Only allow .jpg files.
+        if (!preg_match('/^snap_\d+_\d+\.jpg$/', $filename)) {
+            return false;
+        }
+    } else if ($filearea === 'evidence_videos') {
+        // Only allow .webm or .mp4 files.
+        if (!preg_match('/^evidence_\d+_\d+\.(webm|mp4)$/', $filename)) {
+            return false;
+        }
     }
 
     // Capability check: teachers with viewsnapshots capability.
@@ -71,7 +78,7 @@ function quizaccess_liveproctoring_pluginfile($course, $cm, $context, $filearea,
     }
 
     $fs   = get_file_storage();
-    $file = $fs->get_file($context->id, 'quizaccess_liveproctoring', 'snapshots', $attemptid, '/', $filename);
+    $file = $fs->get_file($context->id, 'quizaccess_liveproctoring', $filearea, $attemptid, '/', $filename);
 
     if (!$file || $file->is_directory()) {
         return false;

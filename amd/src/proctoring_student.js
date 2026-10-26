@@ -84,6 +84,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
         setupTabSwitch();
         setupMultiMonitorCheck();
+        setupScreenshotDetection();
 
         const attemptid = getAttemptId();
         const hasSession = attemptid ? sessionStorage.getItem('lp_cam_granted_' + attemptid) : null;
@@ -200,20 +201,20 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         ].join(';');
 
         const title = isReconnect
-            ? (cfg.strings.cameragate_lost || 'Camera feed disconnected!')
-            : (cfg.strings.cameragate_title || 'Webcam Proctoring Required');
+            ? (cfg.strings.cameragate_lost || 'Camera & Microphone feed disconnected!')
+            : (cfg.strings.cameragate_title || 'Webcam & Microphone Required');
 
         const desc = isReconnect
-            ? 'تم إيقاف الامتحان مؤقتاً بسبب انقطاع بث الكاميرا. يرجى إعادة تفعيل الكاميرا فوراً قبل انتهاء الوقت المتبقي وإلا سيتم إخراجك من الامتحان وتسليمه تلقائياً.'
-            : (cfg.strings.cameragate_desc || 'This exam requires an active webcam. Questions remain blocked until camera access is granted.');
+            ? 'تم إيقاف الامتحان مؤقتاً بسبب انقطاع بث الكاميرا أو الميكروفون. يرجى إعادة تفعيلهما فوراً قبل انتهاء الوقت المتبقي وإلا سيتم إخراجك من الامتحان وتسليمه تلقائياً.'
+            : (cfg.strings.cameramic_required || 'Webcam and Microphone access are strictly required to enter this exam. Questions remain blocked until camera and mic access are granted.');
 
         const btnText = isReconnect
-            ? '🔄 إعادة تفعيل الكاميرا ومتابعة الحل'
-            : (cfg.strings.cameragate_btn || 'Enable Camera & Enter Exam');
+            ? '🔄 إعادة تفعيل الكاميرا والمايك ومتابعة الحل'
+            : (cfg.strings.cameragate_btn || '📷🎤 السماح بالكاميرا والمايك ودخول الامتحان');
 
         gate.innerHTML = `
             <div style="max-width:480px;width:100%;background:#161b22;border:1px solid ${isReconnect ? '#da3633' : '#30363d'};border-radius:16px;padding:32px 24px;text-align:center;box-shadow:0 16px 40px rgba(0,0,0,0.6);color:#f0f6fc;">
-                <div style="font-size:48px;margin-bottom:12px;">${isReconnect ? '🚨' : '📷'}</div>
+                <div style="font-size:48px;margin-bottom:12px;">${isReconnect ? '🚨' : '📷🎤'}</div>
                 <h2 style="font-size:20px;font-weight:bold;margin:0 0 12px;color:${isReconnect ? '#f85149' : '#f0f6fc'};">${title}</h2>
                 <p style="color:#8b949e;font-size:14px;line-height:1.6;margin:0 0 20px;">${desc}</p>
                 ${isReconnect ? `
@@ -405,47 +406,42 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             facingMode: 'user',
         };
 
-        const tryGetUserMedia = function(withAudio) {
-            return navigator.mediaDevices.getUserMedia({
-                video: videoConstraints,
-                audio: withAudio,
-            }).catch(function(err) {
-                if (withAudio) {
-                    // Fallback to video-only if microphone is absent or denied.
-                    return navigator.mediaDevices.getUserMedia({
-                        video: videoConstraints,
-                        audio: false,
-                    });
-                }
-                throw err;
-            });
-        };
+        navigator.mediaDevices.getUserMedia({
+            video: videoConstraints,
+            audio: true,
+        }).then(function(mediaStream) {
+            // Strictly verify BOTH video AND audio tracks are present and active!
+            const videoTracks = mediaStream.getVideoTracks();
+            const audioTracks = mediaStream.getAudioTracks();
+            if (!videoTracks.length || !audioTracks.length) {
+                mediaStream.getTracks().forEach(function(t) { t.stop(); });
+                cameraActive = false;
+                showGateError(cfg.strings.cameramic_required || 'Webcam and Microphone access are strictly required to enter this exam.');
+                logEvent('camera_denied', 'high');
+                return;
+            }
 
-        tryGetUserMedia(true).then(function(mediaStream) {
             // Virtual Camera Blacklist Inspection.
-            const tracks = mediaStream.getVideoTracks();
-            if (tracks.length > 0) {
-                const track = tracks[0];
-                const trackLabel = (track.label || '').toLowerCase();
-                const blacklistedKeywords = [
-                    'obs', 'virtual', 'manycam', 'v4l2loopback', 'splitcam',
-                    'camo', 'droidcam', 'iriun', 'fake', 'software camera', 'e2esoft'
-                ];
-                const isVirtual = blacklistedKeywords.some(function(keyword) {
-                    return trackLabel.indexOf(keyword) !== -1;
-                });
+            const track = videoTracks[0];
+            const trackLabel = (track.label || '').toLowerCase();
+            const blacklistedKeywords = [
+                'obs', 'virtual', 'manycam', 'v4l2loopback', 'splitcam',
+                'camo', 'droidcam', 'iriun', 'fake', 'software camera', 'e2esoft'
+            ];
+            const isVirtual = blacklistedKeywords.some(function(keyword) {
+                return trackLabel.indexOf(keyword) !== -1;
+            });
 
-                if (isVirtual) {
-                    track.stop();
-                    stream = null;
-                    cameraActive = false;
-                    logEvent('virtual_camera_detected', 'high');
-                    const errTemplate = cfg.strings.virtualcamerablocked || 'Virtual camera detected ({$a}). Virtual cameras are strictly prohibited.';
-                    const errMsg = errTemplate.replace('{$a}', track.label || 'Virtual Device');
-                    showCameraGate(false);
-                    showGateError(errMsg);
-                    return;
-                }
+            if (isVirtual) {
+                mediaStream.getTracks().forEach(function(t) { t.stop(); });
+                stream = null;
+                cameraActive = false;
+                logEvent('virtual_camera_detected', 'high');
+                const errTemplate = cfg.strings.virtualcamerablocked || 'Virtual camera detected ({$a}). Virtual cameras are strictly prohibited.';
+                const errMsg = errTemplate.replace('{$a}', track.label || 'Virtual Device');
+                showCameraGate(false);
+                showGateError(errMsg);
+                return;
             }
 
             stream = mediaStream;
@@ -478,21 +474,28 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                 video.srcObject = mediaStream;
             }
 
-            // Monitor video track liveness.
-            if (tracks.length > 0) {
-                tracks[0].onended = function() {
-                    handleCameraLost();
-                };
-                tracks[0].onmute = function() {
-                    handleCameraLost();
-                };
-            }
+            // Monitor video & audio track liveness.
+            videoTracks[0].onended = function() {
+                handleCameraLost();
+            };
+            videoTracks[0].onmute = function() {
+                handleCameraLost();
+            };
+            audioTracks[0].onended = function() {
+                handleCameraLost();
+            };
+            audioTracks[0].onmute = function() {
+                handleCameraLost();
+            };
+
+            // Start audio speech / loud noise monitoring.
+            setupAudioSpeechDetection(mediaStream);
 
             startSnapshots();
         }).catch(function() {
             cameraActive = false;
-            showGateError(cfg.strings.cameragate_denied || 'Camera access was denied.');
-            logEvent('camera_blocked', 'high');
+            showGateError(cfg.strings.cameramic_required || 'Webcam and Microphone access are strictly required to enter this exam.');
+            logEvent('camera_denied', 'high');
         });
     };
 
@@ -522,7 +525,12 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     /**
      * Capture a frame from the camera and push to server.
      */
-    const captureAndPush = function() {
+    /**
+     * Capture a frame from the camera and push to server.
+     *
+     * @param {string|null} breachType Optional breach identifier to flag evidence snapshot.
+     */
+    const captureAndPush = function(breachType) {
         if (!cameraActive || !video || !canvas) {
             return;
         }
@@ -541,16 +549,21 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             return;
         }
 
+        const params = {
+            cmid:      cfg.cmid,
+            quizid:    cfg.quizid,
+            attemptid: attemptid,
+            image:     imagedata,
+            sesskey:   cfg.sesskey,
+        };
+        if (breachType) {
+            params.breach = breachType;
+        }
+
         fetch(cfg.pushurl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-                cmid:      cfg.cmid,
-                quizid:    cfg.quizid,
-                attemptid: attemptid,
-                image:     imagedata,
-                sesskey:   cfg.sesskey,
-            }),
+            body: new URLSearchParams(params),
         }).then(function(r) {
             return r.json();
         }).then(function(data) {
@@ -560,9 +573,96 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             if (data && data.identity_match === false) {
                 issueWarning('identity_mismatch');
             }
+            if (data && data.face_detected === false) {
+                issueWarning('no_face');
+            }
+            if (data && data.face_count > 1) {
+                issueWarning('multiple_faces');
+            }
         }).catch(function() {
             // Network error — silently retry next interval.
         });
+    };
+
+    /**
+     * Detect screenshot, print, and screen-clipping attempts.
+     */
+    const setupScreenshotDetection = function() {
+        window.addEventListener('keyup', function(e) {
+            if (e.key === 'PrintScreen' || e.keyCode === 44) {
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText('');
+                    }
+                } catch (err) {}
+                issueWarning('screenshot_attempt');
+            }
+        });
+
+        window.addEventListener('keydown', function(e) {
+            // Ctrl+P / Cmd+P (Print to PDF / printer).
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+                e.preventDefault();
+                issueWarning('screenshot_attempt');
+            }
+            // Snipping tool shortcuts: Ctrl+Shift+S or Meta+Shift+S.
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'S' || e.key === 's')) {
+                e.preventDefault();
+                issueWarning('screenshot_attempt');
+            }
+        });
+    };
+
+    /**
+     * Monitor audio levels to detect student speech or loud conversations.
+     *
+     * @param {MediaStream} audioStream
+     */
+    const setupAudioSpeechDetection = function(audioStream) {
+        if (!audioStream || !audioStream.getAudioTracks().length) {
+            return;
+        }
+
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) {
+                return;
+            }
+            const actx = new AudioCtx();
+            const src = actx.createMediaStreamSource(audioStream);
+            const analyser = actx.createAnalyser();
+            analyser.fftSize = 256;
+            src.connect(analyser);
+
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            let speechDurationMs = 0;
+            let lastSpeechWarnTime = 0;
+
+            setInterval(function() {
+                if (!cameraActive || !stream) {
+                    return;
+                }
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    sum += dataArray[i];
+                }
+                const avg = sum / dataArray.length;
+                if (avg > 38) {
+                    speechDurationMs += 250;
+                    if (speechDurationMs >= 1750) {
+                        const now = Date.now();
+                        if (now - lastSpeechWarnTime > 8000) {
+                            lastSpeechWarnTime = now;
+                            issueWarning('speaking_detected');
+                        }
+                        speechDurationMs = 0;
+                    }
+                } else {
+                    speechDurationMs = Math.max(0, speechDurationMs - 120);
+                }
+            }, 250);
+        } catch (e) {}
     };
 
     /**
@@ -596,7 +696,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     };
 
     /**
-     * Issue a warning to the student.
+     * Issue a warning to the student and capture immediate breach proof.
      *
      * @param {string} eventtype Type of violation.
      */
@@ -604,10 +704,27 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         warningCount++;
         logEvent(eventtype, warningCount > 2 ? 'high' : 'medium');
 
+        // Immediately take snapshot of the student at this exact breach moment!
+        if (eventtype !== 'ai_alert' && eventtype !== 'identity_mismatch' && eventtype !== 'no_face' && eventtype !== 'multiple_faces') {
+            captureAndPush('breach_' + eventtype);
+        }
+
         const remaining = cfg.warninglimit - warningCount;
+        let violationText = cfg.strings.warningmessage || 'A proctoring violation has been detected.';
+        if (eventtype === 'tab_switch') {
+            violationText = cfg.strings.tabswitch || violationText;
+        } else if (eventtype === 'screenshot_attempt') {
+            violationText = cfg.strings.screenshot_detected || 'Screenshot attempt detected!';
+        } else if (eventtype === 'speaking_detected') {
+            violationText = cfg.strings.speaking_detected || 'Speech or noise detected!';
+        } else if (eventtype === 'no_face') {
+            violationText = cfg.strings.face_disappeared || 'Student face not detected in frame!';
+        } else if (eventtype === 'multiple_faces') {
+            violationText = 'Multiple faces detected in camera frame!';
+        }
 
         showWarning(
-            cfg.strings.warningmessage + '\n' +
+            violationText + '\n' +
             cfg.strings.warningcount + ': ' + warningCount + ' / ' + cfg.warninglimit +
             (remaining > 0 ? ' (' + remaining + ' remaining)' : '')
         );

@@ -105,6 +105,17 @@ $string['studentaudio'] = 'صوت الطالب';
 $string['audiomuted'] = 'الصوت: مكتوم';
 $string['audiounmuted'] = 'الصوت: مفعّل';
 $string['classroom'] = 'الفصل / المجموعة';
+$string['record_clip'] = 'تسجيل مقطع إثبات';
+$string['recording_clip'] = 'جارٍ تسجيل الإثبات';
+$string['stop_record_clip'] = 'إيقاف وحفظ الإثبات';
+$string['clip_saved'] = 'تم حفظ وتوثيق مقطع الفيديو كدليل رسمي في تقرير الامتحان بنجاح!';
+$string['evidence_videos'] = 'مقاطع الفيديو المسجلة كدليل إثبات';
+$string['no_evidence_videos'] = 'لا توجد مقاطع فيديو مسجلة لهذا الطالب.';
+$string['breach_events'] = 'سجل الخروقات والمخالفات الأمنية';
+$string['screenshot_detected'] = 'محاولة التقاط صورة للشاشة (Screenshot)';
+$string['speaking_detected'] = 'رصد تحدث أو أصوات مرتفعة أثناء الاختبار';
+$string['face_disappeared'] = 'اختفاء وجه الطالب من إطار الكاميرا';
+$string['cameramic_required'] = 'الكاميرا والميكروفون إلزاميان تماماً لدخول هذا الامتحان، ولا يُقبل البدء دونهما.';
 
 // الصلاحيات.
 $string['liveproctoring:viewmonitor'] = 'عرض شاشة المراقبة الحية';

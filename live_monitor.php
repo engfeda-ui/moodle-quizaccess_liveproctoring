@@ -71,6 +71,7 @@ $PAGE->requires->js_call_amd(
         'turnusername' => (string) (get_config('quizaccess_liveproctoring', 'turn_username') ?: 'lpuser'),
         'turnpassword' => (string) (get_config('quizaccess_liveproctoring', 'turn_password') ?: 'StrongPass123!'),
         'wsurl'     => (string) (get_config('quizaccess_liveproctoring', 'ws_url') ?: ''),
+        'uploadurl' => (new moodle_url('/mod/quiz/accessrule/liveproctoring/upload_evidence.php'))->out(false),
         'strings'   => [
             'high'                => get_string('riskhigh', 'quizaccess_liveproctoring'),
             'medium'              => get_string('riskmedium', 'quizaccess_liveproctoring'),
@@ -92,6 +93,10 @@ $PAGE->requires->js_call_amd(
             'studentaudio'        => get_string('studentaudio', 'quizaccess_liveproctoring'),
             'audiomuted'          => get_string('audiomuted', 'quizaccess_liveproctoring'),
             'audiounmuted'        => get_string('audiounmuted', 'quizaccess_liveproctoring'),
+            'record_clip'         => get_string('record_clip', 'quizaccess_liveproctoring'),
+            'recording_clip'      => get_string('recording_clip', 'quizaccess_liveproctoring'),
+            'stop_record_clip'    => get_string('stop_record_clip', 'quizaccess_liveproctoring'),
+            'clip_saved'          => get_string('clip_saved', 'quizaccess_liveproctoring'),
         ],
     ]]
 );

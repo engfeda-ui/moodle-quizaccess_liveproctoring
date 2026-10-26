@@ -97,9 +97,16 @@
                 </div>
                 <!-- Live Audio Controls in Spotlight -->
                 <div class="lp-audio-strip" style="position:absolute;bottom:10px;left:10px;right:10px;display:flex;align-items:center;justify-content:space-between;background:rgba(15,23,42,0.85);backdrop-filter:blur(4px);padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);">
-                    <button id="lp-spotlight-audio-toggle" class="btn btn-sm btn-outline-success" style="font-size:12px;font-weight:bold;">
-                        🔊 <span id="lp-audio-btn-label">{{#str}}audiounmuted, quizaccess_liveproctoring{{/str}}</span>
-                    </button>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <button id="lp-spotlight-audio-toggle" class="btn btn-sm btn-outline-success" style="font-size:12px;font-weight:bold;">
+                            🔊 <span id="lp-audio-btn-label">{{#str}}audiounmuted, quizaccess_liveproctoring{{/str}}</span>
+                        </button>
+                        <button id="lp-spotlight-record-clip" class="btn btn-sm btn-outline-danger" style="font-size:12px;font-weight:bold;display:flex;align-items:center;gap:4px;">
+                            <span id="lp-record-icon">🔴</span>
+                            <span id="lp-record-btn-label">{{#str}}record_clip, quizaccess_liveproctoring{{/str}}</span>
+                            <span id="lp-record-timer" style="display:none;font-family:monospace;background:rgba(239,68,68,0.25);padding:1px 5px;border-radius:4px;margin-left:4px;">00:00</span>
+                        </button>
+                    </div>
                     <div style="display:flex;align-items:center;gap:8px;">
                         <span style="font-size:11px;color:#94a3b8;">{{#str}}studentaudio, quizaccess_liveproctoring{{/str}}:</span>
                         <div style="width:100px;height:8px;background:#334155;border-radius:4px;overflow:hidden;position:relative;">
