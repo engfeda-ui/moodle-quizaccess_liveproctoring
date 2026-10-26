@@ -101,6 +101,10 @@ $string['filter_flagged'] = 'المخالفون فقط';
 $string['sound_toggle'] = 'أصوات التنبيه';
 $string['fullscreen'] = 'ملء الشاشة';
 $string['warning_sent'] = 'تم إرسال الإنذار للطالب بنجاح!';
+$string['studentaudio'] = 'صوت الطالب';
+$string['audiomuted'] = 'الصوت: مكتوم';
+$string['audiounmuted'] = 'الصوت: مفعّل';
+$string['classroom'] = 'الفصل / المجموعة';
 
 // الصلاحيات.
 $string['liveproctoring:viewmonitor'] = 'عرض شاشة المراقبة الحية';

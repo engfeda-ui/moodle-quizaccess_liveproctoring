@@ -100,6 +100,10 @@ $string['filter_flagged'] = 'Flagged Only';
 $string['sound_toggle'] = 'Alert Sound';
 $string['fullscreen'] = 'Fullscreen Hall';
 $string['warning_sent'] = 'Warning sent successfully!';
+$string['studentaudio'] = 'Student Audio';
+$string['audiomuted'] = 'Audio: Muted';
+$string['audiounmuted'] = 'Audio: Active';
+$string['classroom'] = 'Classroom / Group';
 
 // Capabilities.
 $string['liveproctoring:viewmonitor'] = 'View live proctoring monitor';

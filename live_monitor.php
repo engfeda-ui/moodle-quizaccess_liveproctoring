@@ -43,8 +43,19 @@ $PAGE->set_title(get_string('livemonitor', 'quizaccess_liveproctoring') . ' — 
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagelayout('popup');
 
-$feedurl   = (new moodle_url('/mod/quiz/accessrule/liveproctoring/live_feed.php',
-    ['cmid' => $cmid, 'quizid' => $quizid]))->out(false);
+// Moodle Groups handling for large cohorts (up to 500+ students partitioned in classes).
+$groupmode = groups_get_activity_groupmode($cm);
+$currentgroup = groups_get_activity_group($cm, true);
+$groupmenu = '';
+if ($groupmode) {
+    $groupmenu = groups_print_activity_menu($cm, $PAGE->url, true);
+}
+
+$feedparams = ['cmid' => $cmid, 'quizid' => $quizid];
+if ($currentgroup) {
+    $feedparams['group'] = $currentgroup;
+}
+$feedurl   = (new moodle_url('/mod/quiz/accessrule/liveproctoring/live_feed.php', $feedparams))->out(false);
 $signalurl = (new moodle_url('/mod/quiz/accessrule/liveproctoring/live_signal.php'))->out(false);
 
 $PAGE->requires->js_call_amd(
@@ -78,6 +89,9 @@ $PAGE->requires->js_call_amd(
             'warning_sent'        => get_string('warning_sent', 'quizaccess_liveproctoring'),
             'filter_all'          => get_string('filter_all', 'quizaccess_liveproctoring'),
             'filter_flagged'      => get_string('filter_flagged', 'quizaccess_liveproctoring'),
+            'studentaudio'        => get_string('studentaudio', 'quizaccess_liveproctoring'),
+            'audiomuted'          => get_string('audiomuted', 'quizaccess_liveproctoring'),
+            'audiounmuted'        => get_string('audiounmuted', 'quizaccess_liveproctoring'),
         ],
     ]]
 );
@@ -85,9 +99,10 @@ $PAGE->requires->js_call_amd(
 echo $OUTPUT->header();
 
 $templatedata = [
-    'quizname' => format_string($quiz->name),
-    'cmid'     => $cmid,
-    'quizid'   => $quizid,
+    'quizname'  => format_string($quiz->name),
+    'cmid'      => $cmid,
+    'quizid'    => $quizid,
+    'groupmenu' => $groupmenu,
     'reporturl' => (new moodle_url('/mod/quiz/accessrule/liveproctoring/report.php',
         ['cmid' => $cmid, 'quizid' => $quizid]))->out(false),
 ];

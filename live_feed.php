@@ -56,11 +56,24 @@ $interval   = 5;   // Seconds between pushes.
 $maxruntime = 300; // Max 5 minutes per connection (client reconnects).
 $starttime  = time();
 
+$groupid = optional_param('group', 0, PARAM_INT);
+
 while ((time() - $starttime) < $maxruntime) {
     // In a live exam hall, only show students who are ACTUALLY live/active right now in this exam
     // (active within the last 2 hours or who pushed a camera snapshot recently).
     // Stale/abandoned attempts from days ago are excluded from the live meeting.
     $activesince = time() - (2 * 3600);
+
+    $groupsql = "";
+    $params = [
+        'quizid'       => $quizid,
+        'activesince'  => $activesince,
+        'activesince2' => $activesince,
+    ];
+    if ($groupid > 0) {
+        $groupsql = " AND qa.userid IN (SELECT gm.userid FROM {groups_members} gm WHERE gm.groupid = :groupid) ";
+        $params['groupid'] = $groupid;
+    }
 
     $sql = "SELECT qa.userid, qa.id AS attemptid, qa.timestart, qa.timemodified,
                    u.firstname, u.lastname, u.username,
@@ -79,14 +92,11 @@ while ((time() - $starttime) < $maxruntime) {
                    )
              WHERE qa.quiz = :quizid
                AND qa.state = 'inprogress'
+               {$groupsql}
                AND (qa.timemodified >= :activesince OR s.timecreated >= :activesince2)
           ORDER BY COALESCE(s.risk_score, 0) DESC, qa.timemodified DESC";
 
-    $rows = $DB->get_records_sql($sql, [
-        'quizid'       => $quizid,
-        'activesince'  => $activesince,
-        'activesince2' => $activesince,
-    ]);
+    $rows = $DB->get_records_sql($sql, $params);
 
     // Aggregate proctoring events by student for this quiz/cmid (within the same active window).
     $eventstats = $DB->get_records_sql(

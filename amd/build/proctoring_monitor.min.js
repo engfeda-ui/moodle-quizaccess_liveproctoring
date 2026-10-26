@@ -52,6 +52,15 @@ define([], function() {
     /** @type {WebSocket|null} WebSocket signaling connection */
     let ws = null;
 
+    /** @type {AudioContext|null} Web Audio API context for VU meter */
+    let vuAudioCtx = null;
+
+    /** @type {AnalyserNode|null} Analyser node for VU meter */
+    let vuAnalyser = null;
+
+    /** @type {number|null} requestAnimationFrame ID for VU meter */
+    let vuAnimFrame = null;
+
     /**
      * Initialise the monitor.
      *
@@ -533,6 +542,38 @@ define([], function() {
                 }
             });
         }
+
+        const audioToggleBtn = document.getElementById('lp-spotlight-audio-toggle');
+        if (audioToggleBtn) {
+            audioToggleBtn.addEventListener('click', function() {
+                const videoElem = document.getElementById('lp-spotlight-video');
+                if (!videoElem) {
+                    return;
+                }
+                videoElem.muted = !videoElem.muted;
+                const label = document.getElementById('lp-audio-btn-label');
+                if (videoElem.muted) {
+                    audioToggleBtn.className = 'btn btn-sm btn-outline-secondary';
+                    if (label) {
+                        label.textContent = cfg.strings.audiomuted || 'Audio: Muted';
+                    }
+                    if (audioToggleBtn.childNodes[0]) {
+                        audioToggleBtn.childNodes[0].nodeValue = '🔇 ';
+                    }
+                } else {
+                    audioToggleBtn.className = 'btn btn-sm btn-outline-success';
+                    if (label) {
+                        label.textContent = cfg.strings.audiounmuted || 'Audio: Active';
+                    }
+                    if (audioToggleBtn.childNodes[0]) {
+                        audioToggleBtn.childNodes[0].nodeValue = '🔊 ';
+                    }
+                    if (vuAudioCtx && vuAudioCtx.state === 'suspended') {
+                        vuAudioCtx.resume().catch(function() {});
+                    }
+                }
+            });
+        }
     };
 
     /**
@@ -562,7 +603,24 @@ define([], function() {
         if (videoElem) {
             videoElem.style.display = 'none';
             videoElem.srcObject = null;
+            videoElem.muted = false;
         }
+
+        const audioToggleBtn = document.getElementById('lp-spotlight-audio-toggle');
+        const audioBtnLabel = document.getElementById('lp-audio-btn-label');
+        if (audioToggleBtn && audioBtnLabel) {
+            audioToggleBtn.className = 'btn btn-sm btn-outline-success';
+            audioBtnLabel.textContent = cfg.strings.audiounmuted || 'Audio: Active';
+            if (audioToggleBtn.childNodes[0]) {
+                audioToggleBtn.childNodes[0].nodeValue = '🔊 ';
+            }
+        }
+
+        const vuBar = document.getElementById('lp-audio-vu-bar');
+        if (vuBar) {
+            vuBar.style.width = '0%';
+        }
+
         if (frameElem) {
             frameElem.style.display = 'none';
             if (student.thumb && student.thumb.length > 50) {
@@ -645,6 +703,61 @@ define([], function() {
     };
 
     /**
+     * Connect remote stream to Web Audio API Analyser to drive the VU meter.
+     *
+     * @param {MediaStream} mediaStream
+     */
+    const setupAudioVUMeter = function(mediaStream) {
+        if (!mediaStream) {
+            return;
+        }
+
+        try {
+            if (vuAudioCtx) {
+                vuAudioCtx.close().catch(function() {});
+            }
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) {
+                return;
+            }
+            vuAudioCtx = new AudioContextClass();
+            vuAnalyser = vuAudioCtx.createAnalyser();
+            vuAnalyser.fftSize = 64;
+            const source = vuAudioCtx.createMediaStreamSource(mediaStream);
+            source.connect(vuAnalyser);
+
+            const dataArray = new Uint8Array(vuAnalyser.frequencyBinCount);
+            const vuBar = document.getElementById('lp-audio-vu-bar');
+
+            const updateVU = function() {
+                if (!activeSpotlight || !vuAnalyser) {
+                    return;
+                }
+                vuAnalyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    sum += dataArray[i];
+                }
+                const avg = sum / dataArray.length;
+                const percent = Math.min(100, Math.round((avg / 128) * 100));
+
+                if (vuBar) {
+                    vuBar.style.width = percent + '%';
+                    if (percent > 65) {
+                        vuBar.style.background = '#ef4444';
+                    } else if (percent > 30) {
+                        vuBar.style.background = '#f59e0b';
+                    } else {
+                        vuBar.style.background = '#10b981';
+                    }
+                }
+                vuAnimFrame = requestAnimationFrame(updateVU);
+            };
+            updateVU();
+        } catch (e) {}
+    };
+
+    /**
      * Handle incoming WebRTC offer from student.
      *
      * @param {string} offerStr
@@ -681,6 +794,7 @@ define([], function() {
                     if (statusBadge) {
                         statusBadge.textContent = '🟢 ' + (cfg.strings.live_active || 'Connected Live (30 FPS)');
                     }
+                    setupAudioVUMeter(event.streams[0]);
                 }
             };
 
@@ -780,6 +894,20 @@ define([], function() {
         const videoElem = document.getElementById('lp-spotlight-video');
         if (videoElem) {
             videoElem.srcObject = null;
+        }
+
+        if (vuAnimFrame) {
+            cancelAnimationFrame(vuAnimFrame);
+            vuAnimFrame = null;
+        }
+        if (vuAudioCtx) {
+            vuAudioCtx.close().catch(function() {});
+            vuAudioCtx = null;
+            vuAnalyser = null;
+        }
+        const vuBar = document.getElementById('lp-audio-vu-bar');
+        if (vuBar) {
+            vuBar.style.width = '0%';
         }
 
         if (activeSpotlight.pollTimer) {

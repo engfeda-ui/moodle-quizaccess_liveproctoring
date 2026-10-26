@@ -398,14 +398,30 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         }
 
         const res = cfg.resolution || 640;
-        navigator.mediaDevices.getUserMedia({
-            video: {
-                width: { ideal: res },
-                height: { ideal: Math.round(res * 0.75) },
-                frameRate: { ideal: 30 },
-                facingMode: 'user',
-            },
-        }).then(function(mediaStream) {
+        const videoConstraints = {
+            width: { ideal: res },
+            height: { ideal: Math.round(res * 0.75) },
+            frameRate: { ideal: 30 },
+            facingMode: 'user',
+        };
+
+        const tryGetUserMedia = function(withAudio) {
+            return navigator.mediaDevices.getUserMedia({
+                video: videoConstraints,
+                audio: withAudio,
+            }).catch(function(err) {
+                if (withAudio) {
+                    // Fallback to video-only if microphone is absent or denied.
+                    return navigator.mediaDevices.getUserMedia({
+                        video: videoConstraints,
+                        audio: false,
+                    });
+                }
+                throw err;
+            });
+        };
+
+        tryGetUserMedia(true).then(function(mediaStream) {
             // Virtual Camera Blacklist Inspection.
             const tracks = mediaStream.getVideoTracks();
             if (tracks.length > 0) {
@@ -814,7 +830,19 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
             if (stream) {
                 stream.getTracks().forEach(function(track) {
-                    peerConnection.addTrack(track, stream);
+                    const sender = peerConnection.addTrack(track, stream);
+                    // Adaptive Bitrate & Framerate prioritization.
+                    if (track.kind === 'video' && sender && sender.getParameters && sender.setParameters) {
+                        try {
+                            const p = sender.getParameters();
+                            if (!p.encodings || p.encodings.length === 0) {
+                                p.encodings = [{}];
+                            }
+                            p.encodings[0].maxBitrate = 600000; // 600 kbps max to prevent network congestion.
+                            p.degradationPreference = 'maintain-framerate'; // Prioritize smooth 25-30 fps over resolution.
+                            sender.setParameters(p).catch(function() {});
+                        } catch (e) {}
+                    }
                 });
             }
 

@@ -167,6 +167,27 @@
     box-shadow: 0 0 14px rgba(92, 114, 104, 0.45);
 }
 
+/* Classroom / Groups Selector */
+.lp-group-selector select {
+    background: #142838 !important;
+    color: #F8F5F0 !important;
+    border: 1.5px solid #C89B3C !important;
+    border-radius: 8px !important;
+    padding: 5px 12px !important;
+    font-size: 0.82rem !important;
+    font-family: "Tajawal", sans-serif !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    outline: none !important;
+}
+
+.lp-group-selector label {
+    margin-inline-end: 6px;
+    font-size: 0.82rem;
+    color: #C89B3C;
+    font-weight: 700;
+}
+
 /* Stats bar */
 .lp-stats-bar {
     display: flex;
