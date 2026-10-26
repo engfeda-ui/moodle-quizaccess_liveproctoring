@@ -116,8 +116,59 @@ if (function_exists('imagecreatefromstring')) {
 // Store full image.
 $storedfile = $fs->create_file_from_string($fileinfo, $imageraw);
 
-// --- AI Analysis ---
+// --- Identity Verification (reference photo) ---
 $settings  = quizaccess_liveproctoring::get_quiz_proctoring_settings($quizid);
+$identityMatch = true;
+$identityReason = '';
+
+if (!empty($settings) && !empty($settings->referencerequired)) {
+    $refrecord = $DB->get_record('quizaccess_liveproctoring_refs', ['userid' => $USER->id]);
+    if (!$refrecord) {
+        // Store first snapshot as reference photo.
+        $refinfo = [
+            'contextid' => $context->id,
+            'component' => 'quizaccess_liveproctoring',
+            'filearea'  => 'references',
+            'itemid'    => $USER->id,
+            'filepath'  => '/',
+            'filename'  => 'ref_' . $USER->id . '_' . $now . '.jpg',
+        ];
+        $refstored = $fs->create_file_from_string($refinfo, $imageraw);
+        if ($refstored) {
+            $ref = new stdClass();
+            $ref->userid       = $USER->id;
+            $ref->fileid       = $refstored->get_id();
+            $ref->timecreated  = $now;
+            $ref->timemodified = $now;
+            $DB->insert_record('quizaccess_liveproctoring_refs', $ref);
+        }
+        $identityMatch = true;
+        $identityReason = 'Reference photo captured.';
+    } else {
+        $reffile = $fs->get_file_by_id($refrecord->fileid);
+        if ($reffile && !$reffile->is_directory()) {
+            $refBase64 = base64_encode($reffile->get_content());
+            $analyzer = new ai_analyzer();
+            $cmp = $analyzer->compare_faces($refBase64, $base64);
+            $identityMatch = (bool) $cmp['match'];
+            $identityReason = $cmp['reason'] ?? '';
+            if (!$identityMatch) {
+                $ev = new stdClass();
+                $ev->userid      = $USER->id;
+                $ev->cmid        = $cmid;
+                $ev->attemptid   = $attemptid;
+                $ev->eventtype   = 'identity_mismatch';
+                $ev->severity    = 'high';
+                $ev->warningcount = 0;
+                $ev->message     = substr($identityReason, 0, 255);
+                $ev->timecreated = $now;
+                $DB->insert_record('quizaccess_liveproctoring_events', $ev);
+            }
+        }
+    }
+}
+
+// --- AI Analysis ---
 $airesult  = ['risk_score' => -1, 'face_detected' => false, 'face_count' => 0,
               'suspicious' => false, 'error' => 'AI disabled'];
 
@@ -125,6 +176,8 @@ if (!empty($settings) && $settings->enableai) {
     $analyzer = new ai_analyzer();
     $airesult = $analyzer->analyze($base64, $USER->id, $attemptid, $quizid);
 }
+$airesult['identity_match']  = $identityMatch;
+$airesult['identity_reason'] = $identityReason;
 
 // --- Store snapshot record ---
 $snaprecord = new stdClass();

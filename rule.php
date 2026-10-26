@@ -113,6 +113,12 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
             get_string('setting:autosubmit', 'quizaccess_liveproctoring'));
         $mform->setDefault('liveproctoring_autosubmit', 0);
 
+        // Require reference photo / identity verification.
+        $mform->addElement('selectyesno', 'liveproctoring_referencerequired',
+            get_string('setting:referencerequired', 'quizaccess_liveproctoring'));
+        $mform->setDefault('liveproctoring_referencerequired', 0);
+        $mform->disabledIf('liveproctoring_referencerequired', 'liveproctoring_enablecamera', 'eq', '0');
+
         // Show watermark on student screen.
         $mform->addElement('selectyesno', 'liveproctoring_showwatermark',
             get_string('setting:showwatermark', 'quizaccess_liveproctoring'));
@@ -145,7 +151,7 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
         $data->autosubmit         = !empty($quiz->liveproctoring_autosubmit) ? 1 : 0;
         $data->showwatermark      = !empty($quiz->liveproctoring_showwatermark) ? 1 : 0;
         $data->blocktabs          = !empty($quiz->liveproctoring_blocktabs) ? 1 : 0;
-        $data->referencerequired  = 0;
+        $data->referencerequired  = !empty($quiz->liveproctoring_referencerequired) ? 1 : 0;
         $data->resolution         = !empty($quiz->liveproctoring_resolution)
             ? (int) $quiz->liveproctoring_resolution : 320;
 
@@ -186,7 +192,8 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
              liveproctoring.autosubmit AS liveproctoring_autosubmit,
              liveproctoring.showwatermark AS liveproctoring_showwatermark,
              liveproctoring.blocktabs AS liveproctoring_blocktabs,
-             liveproctoring.resolution AS liveproctoring_resolution',
+             liveproctoring.resolution AS liveproctoring_resolution,
+             liveproctoring.referencerequired AS liveproctoring_referencerequired',
             'LEFT JOIN {quizaccess_liveproctoring_quiz} liveproctoring ON liveproctoring.quizid = quiz.id',
             [],
         ];
@@ -269,6 +276,7 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
             'attemptid'        => $attemptid,
             'snapshotinterval' => (int) ($settings->snapshotinterval ?? 30),
             'resolution'       => (int) ($settings->resolution ?? 320),
+            'referencerequired'=> (bool) ($settings->referencerequired ?? false),
             'warninglimit'     => (int) ($settings->warninglimit ?? 3),
             'autosubmit'       => (bool) ($settings->autosubmit ?? false),
             'showwatermark'    => (bool) ($settings->showwatermark ?? true),

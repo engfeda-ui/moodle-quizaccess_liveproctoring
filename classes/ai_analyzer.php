@@ -180,6 +180,89 @@ class ai_analyzer {
     }
 
     /**
+     * Compare two face images (reference vs snapshot) for identity verification.
+     *
+     * @param string $referenceBase64
+     * @param string $snapshotBase64
+     * @return array ['match' => bool, 'confidence' => int, 'reason' => string]
+     */
+    public function compare_faces(string $referenceBase64, string $snapshotBase64): array {
+        if (!$this->is_configured()) {
+            return ['match' => true, 'confidence' => 100, 'reason' => 'AI not configured (fallback allow)'];
+        }
+        if (strpos($referenceBase64, 'data:') === 0) {
+            $referenceBase64 = preg_replace('/^data:[^;]+;base64,/', '', $referenceBase64);
+        }
+        if (strpos($snapshotBase64, 'data:') === 0) {
+            $snapshotBase64 = preg_replace('/^data:[^;]+;base64,/', '', $snapshotBase64);
+        }
+        $isopenai = (strpos($this->apiurl, 'chat/completions') !== false ||
+                     strpos($this->apiurl, 'openrouter') !== false ||
+                     strpos($this->apiurl, 'openai') !== false);
+        if (!$isopenai) {
+            return ['match' => true, 'confidence' => 100, 'reason' => 'Non-OpenAI endpoint (fallback allow)'];
+        }
+        $prompt = 'You are an identity verification AI. Compare the two webcam images of the same person. ' .
+                  'Image 1 is the reference photo captured at exam start. Image 2 is a later snapshot. ' .
+                  'Return ONLY a valid JSON object with keys: "match" (boolean), "confidence" (integer 0-100), "reason" (short string). ' .
+                  'No markdown fences, no conversational text.';
+        $payload = json_encode([
+            'model' => $this->aimodel,
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => [
+                        ['type' => 'text', 'text' => $prompt],
+                        ['type' => 'image_url', 'image_url' => ['url' => 'data:image/jpeg;base64,' . $referenceBase64]],
+                        ['type' => 'image_url', 'image_url' => ['url' => 'data:image/jpeg;base64,' . $snapshotBase64]],
+                    ],
+                ],
+            ],
+            'max_tokens' => 200,
+        ]);
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL            => $this->apiurl,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => $this->timeout,
+            CURLOPT_HTTPHEADER     => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $this->apikey,
+                'Accept: application/json',
+            ],
+            CURLOPT_SSL_VERIFYPEER => true,
+        ]);
+        $response = curl_exec($curl);
+        $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $curlerr  = curl_error($curl);
+        curl_close($curl);
+        if ($curlerr || $httpcode !== 200 || empty($response)) {
+            return ['match' => true, 'confidence' => 0, 'reason' => 'API error: ' . ($curlerr ?: "HTTP $httpcode")];
+        }
+        $data = json_decode($response, true);
+        $content = $data['choices'][0]['message']['content'] ?? '';
+        if (empty($content) && !empty($data['choices'][0]['message']['reasoning'])) {
+            $content = $data['choices'][0]['message']['reasoning'];
+        }
+        if (preg_match('/```(?:json)?\s*(\{.*?\})\s*```/s', $content, $matches)) {
+            $content = $matches[1];
+        } else if (preg_match('/(\{.*?\})/s', $content, $matches)) {
+            $content = $matches[1];
+        }
+        $parsed = json_decode($content, true);
+        if (is_array($parsed)) {
+            return [
+                'match'      => (bool) ($parsed['match'] ?? true),
+                'confidence' => (int) ($parsed['confidence'] ?? 0),
+                'reason'     => (string) ($parsed['reason'] ?? ''),
+            ];
+        }
+        return ['match' => true, 'confidence' => 0, 'reason' => 'Parse error'];
+    }
+
+    /**
      * Normalize API response into a consistent structure.
      *
      * @param array $raw Raw API response.

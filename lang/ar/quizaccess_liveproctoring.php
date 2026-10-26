@@ -32,6 +32,7 @@ $string['setting:enablecamera'] = 'تفعيل مراقبة الكاميرا';
 $string['setting:enableai'] = 'تفعيل تحليل الذكاء الاصطناعي';
 $string['setting:snapshotinterval'] = 'الفترة بين اللقطات (بالثواني)';
 $string['setting:resolution'] = 'Webcam resolution (width in px)';
+$string['setting:referencerequired'] = 'Require identity verification (reference photo)';
 $string['setting:resolution'] = 'Webcam resolution (width in px)';
 $string['setting:warninglimit'] = 'الحد الأقصى للتحذيرات';
 $string['setting:autosubmit'] = 'التسليم التلقائي عند بلوغ الحد';

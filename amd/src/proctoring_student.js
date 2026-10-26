@@ -422,6 +422,9 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             if (data && data.suspicious) {
                 issueWarning('ai_alert');
             }
+            if (data && data.identity_match === false) {
+                issueWarning('identity_mismatch');
+            }
         }).catch(function() {
             // Network error — silently retry next interval.
         });
