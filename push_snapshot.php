@@ -56,6 +56,13 @@ $imagedata = required_param('image',     PARAM_RAW); // base64 data URI
 $context = context_module::instance($cmid, MUST_EXIST);
 require_capability('mod/quiz:attempt', $context);
 
+// Verify cm belongs to the supplied quiz (cross-module IDOR guard).
+list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
+if ((int) $cm->instance !== (int) $quizid) {
+    http_response_code(403);
+    die(json_encode(['error' => 'Module/quiz mismatch']));
+}
+
 // Verify the attempt belongs to the current user.
 $attempt = $DB->get_record('quiz_attempts', ['id' => $attemptid, 'quiz' => $quizid], '*', MUST_EXIST);
 if ($attempt->userid != $USER->id) {

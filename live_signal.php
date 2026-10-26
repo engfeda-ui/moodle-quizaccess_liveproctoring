@@ -56,6 +56,14 @@ if (in_array($action, $teacheractions)) {
     $context = context_module::instance($cmid, MUST_EXIST);
     require_capability('quizaccess/liveproctoring:viewmonitor', $context);
 
+    // Verify cm belongs to the attempt's quiz (cross-module IDOR guard).
+    list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
+    if ((int) $cm->instance !== (int) $attempt->quiz) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Module/quiz mismatch']);
+        exit;
+    }
+
     $record = $DB->get_record('quizaccess_liveproctoring_live', ['attemptid' => $attemptid]);
 
     if ($action === 'start_stream') {

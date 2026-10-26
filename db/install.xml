@@ -89,6 +89,10 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="userid_unique" TYPE="unique" FIELDS="userid"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="userid" UNIQUE="true" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
     <!-- Live streaming and signaling table for Zoom-style Spotlight -->
     <TABLE NAME="quizaccess_liveproctoring_live" COMMENT="Live WebRTC signaling and stream requests">
       <FIELDS>

@@ -44,6 +44,13 @@ if ($attempt->userid != $USER->id) {
     die(json_encode(['error' => 'Access denied']));
 }
 
+// Verify cmid belongs to the attempt's quiz (cross-module IDOR guard).
+list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
+if ((int) $cm->instance !== (int) $attempt->quiz) {
+    http_response_code(403);
+    die(json_encode(['error' => 'Module/quiz mismatch']));
+}
+
 // Sanitize severity.
 $allowed = ['low', 'medium', 'high'];
 if (!in_array($severity, $allowed)) {

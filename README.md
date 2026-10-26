@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.9-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.10-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,12 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.10 (Build `2026102601`) — 2026-10-26
+- **Production Hardening & Cross-Module IDOR Defense (v1.0.10):**
+  - **Fixed malformed `db/install.xml`**: Closed the unclosed `quizaccess_liveproctoring_refs` table definition (missing `</TABLE>` and indexes), which previously broke fresh plugin installation/upgrade on production LMS. All XMLDB tables now validate cleanly.
+  - **Cross-Module IDOR Guards**: Added strict `cm->instance === quizid/attempt->quiz` binding checks in `push_snapshot.php`, `log_event.php`, and `live_signal.php` (teacher actions), preventing cross-quiz/cross-module snapshot/event/stream manipulation.
+  - **Version Bump**: Production release v1.0.10.
 
 ### 🌟 v1.0.9 (Build `2026102510`) — 2026-10-25
 - **SANAD Visual Identity & Zoom Virtual Hall Theming (`styles.css` & `amd/src/proctoring_monitor.js`):**
