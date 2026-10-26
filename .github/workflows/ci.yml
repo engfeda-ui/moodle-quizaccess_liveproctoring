@@ -21,15 +21,17 @@ jobs:
         php: ['8.1', '8.2', '8.3']
 
     services:
-      postgres:
-        image: postgres:13
+      mysql:
+        image: mysql:8.0
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_HOST_AUTH_METHOD: trust
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: moodle_ci_db
+          MYSQL_USER: moodle
+          MYSQL_PASSWORD: moodle
         ports:
-          - 5432:5432
+          - 3306:3306
         options: >-
-          --health-cmd pg_isready
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -43,7 +45,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: pgsql, mbstring, gd, curl, xml, zip, intl, sodium
+          extensions: mysqli, mbstring, gd, curl, xml, zip, intl, sodium
           ini-values: max_execution_time=600, memory_limit=512M, max_input_vars=5000
           tools: composer:v2
 
@@ -59,7 +61,7 @@ jobs:
           echo "$(cd ci/vendor/bin; pwd)" >> $GITHUB_PATH
 
       - name: Install Moodle
-        run: moodle-plugin-ci install --plugin mod/quiz/accessrule/liveproctoring --db-host=127.0.0.1 --db-user=postgres --db-name=moodle_ci_db --db-pass="" --db-type=pgsql
+        run: moodle-plugin-ci install --plugin mod/quiz/accessrule/liveproctoring --db-host=127.0.0.1 --db-user=moodle --db-name=moodle_ci_db --db-pass=moodle --db-port=3306 --db-type=mysqli
         env:
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
 
