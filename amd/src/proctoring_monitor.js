@@ -49,6 +49,9 @@ define([], function() {
     /** @type {object|null} Active spotlight session */
     let activeSpotlight = null;
 
+    /** @type {WebSocket|null} WebSocket signaling connection */
+    let ws = null;
+
     /**
      * Initialise the monitor.
      *
@@ -62,6 +65,44 @@ define([], function() {
         setupReconnect();
         setupDockControls();
         setupSpotlightHandlers();
+        connectWS();
+    };
+
+    const connectWS = function() {
+        if (!cfg.wsurl) {
+            return;
+        }
+        try {
+            ws = new WebSocket(cfg.wsurl + '?cmid=' + cfg.cmid + '&role=teacher');
+            ws.onmessage = function(e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.type === 'send_offer' && data.offer) {
+                        if (activeSpotlight && !activeSpotlight.offerProcessed && data.attemptid === activeSpotlight.attemptid) {
+                            activeSpotlight.offerProcessed = true;
+                            handleIncomingOffer(data.offer, data.student_candidates);
+                        }
+                    }
+                    if (data.type === 'push_live_frame' && data.frame) {
+                        const frameElem = document.getElementById('lp-spotlight-frame');
+                        const videoElem = document.getElementById('lp-spotlight-video');
+                        if (frameElem && (!videoElem || videoElem.style.display === 'none')) {
+                            frameElem.src = data.frame;
+                            frameElem.style.display = 'block';
+                        }
+                    }
+                } catch (err) {}
+            };
+            ws.onclose = function() {
+                setTimeout(connectWS, 3000);
+            };
+        } catch (e) {}
+    };
+
+    const sendWS = function(msg) {
+        if (ws && ws.readyState === 1) {
+            try { ws.send(JSON.stringify(msg)); } catch (e) {}
+        }
     };
 
     /**
@@ -532,6 +573,8 @@ define([], function() {
             }),
         }).catch(function() {});
 
+        sendWS({ type: 'start_stream', attemptid: student.attemptid, cmid: cfg.cmid });
+
         // Start polling stream signal every 1s.
         activeSpotlight.pollTimer = setInterval(pollSpotlightStream, 500);
     };
@@ -673,6 +716,8 @@ define([], function() {
         }).then(function() {
             alert(cfg.strings.warning_sent || 'Warning sent successfully!');
         }).catch(function() {});
+
+        sendWS({ type: 'send_warning', attemptid: attemptid, cmid: cfg.cmid, message: message });
     };
 
     /**
@@ -691,6 +736,8 @@ define([], function() {
         }).then(function() {
             closeSpotlight();
         }).catch(function() {});
+
+        sendWS({ type: 'terminate_attempt', attemptid: attemptid, cmid: cfg.cmid });
     };
 
     /**

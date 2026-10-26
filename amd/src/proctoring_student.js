@@ -71,6 +71,9 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     /** @type {number|null} Signal heartbeat timer */
     let signalTimer = null;
 
+    /** @type {WebSocket|null} WebSocket signaling connection */
+    let ws = null;
+
     /**
      * Initialise the student proctoring module.
      *
@@ -82,6 +85,47 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         setupTabSwitch();
         showCameraGate(false);
         setupSignalHeartbeat();
+        connectWS();
+    };
+
+    /**
+     * Connect to WebSocket signaling server (optional, for instant push).
+     */
+    const connectWS = function() {
+        if (!cfg.wsurl) {
+            return;
+        }
+        try {
+            ws = new WebSocket(cfg.wsurl + '?cmid=' + cfg.cmid + '&role=student');
+            ws.onmessage = function(e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.type === 'terminate' || data.terminate_flag === 1) {
+                        clearInterval(signalTimer);
+                        autoSubmitAttempt();
+                        return;
+                    }
+                    if (data.type === 'warning' || data.custom_warning) {
+                        showWarning(data.message || data.custom_warning);
+                    }
+                    if (data.type === 'start_stream' || data.active === true) {
+                        const attemptid = getAttemptId();
+                        if (!isLiveStreaming && stream && cameraActive && attemptid) {
+                            startLiveWebRTC(attemptid);
+                        }
+                    }
+                } catch (err) {}
+            };
+            ws.onclose = function() {
+                setTimeout(connectWS, 3000);
+            };
+        } catch (e) {}
+    };
+
+    const sendWS = function(msg) {
+        if (ws && ws.readyState === 1) {
+            try { ws.send(JSON.stringify(msg)); } catch (e) {}
+        }
     };
 
     /**
@@ -715,6 +759,14 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                 if (instantFrame) {
                     params.frame = instantFrame;
                 }
+                sendWS({
+                    type: 'send_offer',
+                    attemptid: attemptid,
+                    cmid: cfg.cmid,
+                    offer: params.offer,
+                    candidates: params.candidates,
+                    frame: params.frame,
+                });
                 return fetch(cfg.signalurl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

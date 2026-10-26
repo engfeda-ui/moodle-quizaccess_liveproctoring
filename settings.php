@@ -92,4 +92,13 @@ if ($hassiteconfig) {
         'StrongPass123!',
         PARAM_TEXT
     ));
+
+    // WebSocket signaling URL.
+    $settings->add(new admin_setting_configtext(
+        'quizaccess_liveproctoring/ws_url',
+        'WebSocket signaling URL',
+        'WebSocket signaling server URL (e.g. ws://150.230.241.37:8080). Leave empty to use HTTP polling.',
+        'ws://150.230.241.37:8080',
+        PARAM_URL
+    ));
 }

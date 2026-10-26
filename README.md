@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.18-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.19-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -90,6 +90,11 @@ Expected response format:
 ---
 
 ## 📋 Changelog
+
+### 🌟 v1.0.19 (Build `2026102610`) — 2026-10-26
+- **WebSocket signaling server**: Deployed Node.js relay on production (port 8080).
+- **Plugin integration**: Added `ws_url` setting; student/monitor connect via WebSocket for instant push (terminate, warning, start_stream, offer) with HTTP fallback.
+- **Removed minified AMD builds** to ensure src changes take effect.
 
 ### 🌟 v1.0.18 (Build `2026102609`) — 2026-10-26
 - **Latency improvements**: Reduced signal heartbeat (1s) and spotlight poll (500ms) for more responsive video/signaling (without full WebSocket).

@@ -280,6 +280,7 @@ class quizaccess_liveproctoring extends quiz_access_rule_base {
             'turnurl'          => (string) (get_config('quizaccess_liveproctoring', 'turn_url') ?: 'turn:150.230.241.37:3478'),
             'turnusername'     => (string) (get_config('quizaccess_liveproctoring', 'turn_username') ?: 'lpuser'),
             'turnpassword'     => (string) (get_config('quizaccess_liveproctoring', 'turn_password') ?: 'StrongPass123!'),
+            'wsurl'            => (string) (get_config('quizaccess_liveproctoring', 'ws_url') ?: ''),
             'warninglimit'     => (int) ($settings->warninglimit ?? 3),
             'autosubmit'       => (bool) ($settings->autosubmit ?? false),
             'showwatermark'    => (bool) ($settings->showwatermark ?? true),

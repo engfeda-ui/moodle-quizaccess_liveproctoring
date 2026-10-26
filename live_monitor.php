@@ -59,6 +59,7 @@ $PAGE->requires->js_call_amd(
         'turnurl'   => (string) (get_config('quizaccess_liveproctoring', 'turn_url') ?: 'turn:150.230.241.37:3478'),
         'turnusername' => (string) (get_config('quizaccess_liveproctoring', 'turn_username') ?: 'lpuser'),
         'turnpassword' => (string) (get_config('quizaccess_liveproctoring', 'turn_password') ?: 'StrongPass123!'),
+        'wsurl'     => (string) (get_config('quizaccess_liveproctoring', 'ws_url') ?: ''),
         'strings'   => [
             'high'                => get_string('riskhigh', 'quizaccess_liveproctoring'),
             'medium'              => get_string('riskmedium', 'quizaccess_liveproctoring'),
