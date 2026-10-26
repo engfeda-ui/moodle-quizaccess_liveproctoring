@@ -168,16 +168,13 @@ if (!empty($settings) && !empty($settings->referencerequired)) {
     }
 }
 
-// --- AI Analysis ---
+// --- AI Analysis (async via scheduled task) ---
+// Risk analysis is deferred to the analyze_snapshots scheduled task to avoid
+// blocking the student request. Only identity verification (if enabled) ran above.
 $airesult  = ['risk_score' => -1, 'face_detected' => false, 'face_count' => 0,
-              'suspicious' => false, 'error' => 'AI disabled'];
-
-if (!empty($settings) && $settings->enableai) {
-    $analyzer = new ai_analyzer();
-    $airesult = $analyzer->analyze($base64, $USER->id, $attemptid, $quizid);
-}
-$airesult['identity_match']  = $identityMatch;
-$airesult['identity_reason'] = $identityReason;
+              'suspicious' => false, 'error' => 'Pending AI analysis (async)',
+              'identity_match'  => $identityMatch,
+              'identity_reason' => $identityReason];
 
 // --- Store snapshot record ---
 $snaprecord = new stdClass();
