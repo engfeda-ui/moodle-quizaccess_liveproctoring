@@ -61,9 +61,18 @@ jobs:
           echo "$(cd ci/vendor/bin; pwd)" >> $GITHUB_PATH
 
       - name: Install Moodle
-        run: moodle-plugin-ci install --plugin mod/quiz/accessrule/liveproctoring --db-host=127.0.0.1 --db-user=moodle --db-name=moodle_ci_db --db-pass=moodle --db-port=3306 --db-type=mysqli
+        run: |
+          moodle-plugin-ci install --plugin mod/quiz/accessrule/liveproctoring --db-host=127.0.0.1 --db-user=moodle --db-name=moodle_ci_db --db-pass=moodle --db-port=3306 --db-type=mysqli 2>&1 | tee install.log
+          echo "INSTALL_EXIT=${PIPESTATUS[0]}" >> install.log
         env:
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
+
+      - name: Upload install log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: install-log-${{ matrix.php }}
+          path: install.log
 
       - name: PHP Lint
         if: ${{ !cancelled() }}
