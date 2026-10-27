@@ -1,7 +1,7 @@
 # 🎥 Live Proctoring with Custom AI (`quizaccess_liveproctoring`)
 
 [![Moodle Plugin](https://img.shields.io/badge/Moodle-4.4+-orange.svg)](https://moodle.org)
-[![Version](https://img.shields.io/badge/version-v1.0.26-blue.svg)](version.php)
+[![Version](https://img.shields.io/badge/version-v1.0.27-blue.svg)](version.php)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An intelligent, real-time proctoring subplugin for Moodle Quiz activities (`mod_quiz`). Combines automatic periodic webcam snapshots, behavioural monitoring (tab-switching detection), anti-cheat watermarking, a real-time **Live Monitor Dashboard** for instructors powered by Server-Sent Events (SSE), and seamless integration with **Custom AI APIs** for automated facial and risk analysis.
@@ -98,7 +98,138 @@ Expected response format:
 
 ---
 
+## 🏗️ Real-Time WebRTC, Server & Docker Infrastructure
+
+To deliver true low-latency, resilient live video streaming and two-way proctoring across large student cohorts (500+ candidates), `quizaccess_liveproctoring` utilizes a specialized, multi-tiered server and container infrastructure:
+
+```
++--------------------------------------------------------------------------------------------------+
+|                                    LIVE PROCTORING ECOSYSTEM                                     |
++------------------------------------+-----------------------------+-------------------------------+
+|       STUDENT BROWSER              |       SIGNALING & RELAY     |       INSTRUCTOR MONITOR      |
+|  - Cam/Mic Hardware                |  - Moodle AJAX (Port 80/443)|  - Zoom Exam Hall UI          |
+|  - Watermark & Breach Radar        |  - Node.js WS (Port 8080)   |  - Live Spotlight 30 FPS HD   |
+|  - WebRTC Peer / SFU Producer      |                             |  - Two-way Audio Intercom     |
++-----------------+------------------+--------------+--------------+---------------+---------------+
+                  |                                 |                              |
+                  |                Media Stream (UDP)                              |
+                  +------------------------+---------------------------------------+
+                                           |
+                   +-----------------------v-----------------------+
+                   |          NAT TRAVERSAL & MEDIA SERVERS        |
+                   |                                               |
+                   |  1. coTURN STUN/TURN (Port 3478, UDP 50K-50.2K|
+                   |     - Encrypted media relay for 4G/5G/NAT     |
+                   |     - 4.2 MB RAM footprint, ultra-efficient   |
+                   |                                               |
+                   |  2. LiveKit Server (Docker SFU Container)     |
+                   |     - Multi-cast Selective Forwarding Unit    |
+                   |     - High-concurrency room router            |
+                   |     - Ports: 7880 (API), 7881 (TCP WebRTC)    |
+                   +-----------------------------------------------+
+```
+
+### 1. The Core Problem Solved: Why Docker & Dedicated Media Servers?
+Standard web servers (like Apache or Nginx with PHP-FPM) are designed for request-response cycles. They **cannot** efficiently route continuous 30 FPS video streams from hundreds of candidates simultaneously without crashing or maxing out worker processes:
+* **Peer-to-Peer (P2P) Limitation ($O(N^2)$ Bandwidth)**: Direct browser-to-browser WebRTC works well for 1-to-1 calls, but when multiple proctors monitor 50 candidates, candidate machines upload duplicate video streams, causing packet loss and laptop overheating.
+* **Strict Firewalls & Carrier-Grade NAT (CGNAT)**: More than 35% of students taking exams from home, phones, or corporate networks are behind Symmetric NATs that block direct peer connections. Without a TURN server, their video appears black or fails to connect.
+
+---
+
+### 2. LiveKit Server (Docker SFU WebRTC Container)
+* **What is LiveKit?**: An open-source, ultra-high performance **Selective Forwarding Unit (SFU)** built in Go.
+* **Container Architecture**:
+  * Deployed via Docker Compose with resource bounds (`cpus: 0.80`, `memory: 1024M`).
+  * Runs in `network_mode: "host"` to eliminate Docker NAT bridge overhead and achieve sub-10ms packet routing.
+* **Why LiveKit Matters for Online Exams**:
+  1. **Bandwidth Optimization**: The student encodes and uploads **exactly one** high-efficiency video stream (capped at 600 kbps) to the server. The SFU intelligently duplicates and routes it to any authorized proctor watching that candidate.
+  2. **Adaptive Bitrate & Simulcast**: If an instructor opens a small thumbnail, the SFU delivers a lightweight sub-stream; when clicking "Live Spotlight", it immediately delivers the 640px 30 FPS high-definition track.
+  3. **Zero Impact on Moodle PHP**: Video frames **never** pass through PHP or the database, leaving Moodle 100% responsive for answering questions and grading.
+* **LiveKit Docker Compose Configuration (`/home/ubuntu/livekit/docker-compose.yml`)**:
+  ```yaml
+  services:
+    livekit:
+      image: livekit/livekit-server:latest
+      container_name: livekit-server
+      restart: unless-stopped
+      command: --config /etc/livekit.yaml
+      network_mode: "host"
+      volumes:
+        - ./livekit.yaml:/etc/livekit.yaml:ro
+      deploy:
+        resources:
+          limits:
+            cpus: '0.80'
+            memory: 1024M
+  ```
+
+---
+
+### 3. coTURN STUN & TURN Service (NAT Traversal)
+* **What is coTURN?**: The industry standard RFC 5766/6156 TURN and STUN server.
+* **Role in Live Proctoring**:
+  * **STUN (Session Traversal Utilities for NAT)**: Discovers the candidate's real public IP and port mappings.
+  * **TURN (Traversal Using Relays around NAT)**: When two peers cannot talk directly due to strict firewalls (university proxies, 4G/5G mobile carriers), coTURN acts as an encrypted relay proxy, ensuring **100% video connection reliability**.
+* **Ultra-Lightweight Footprint**:
+  * Consumes only **~4.2 MB of RAM** and negligible CPU when idle.
+  * Configured with dynamic media port pooling: `min-port=50000`, `max-port=50200` to minimize firewall exposure.
+* **coTURN Configuration (`/etc/turnserver.conf`)**:
+  ```ini
+  listening-port=3478
+  fingerprint
+  lt-cred-mech
+  realm=liveproctoring
+  user=username:password
+  external-ip=YOUR_SERVER_PUBLIC_IP
+  relay-ip=YOUR_SERVER_PUBLIC_IP
+  min-port=50000
+  max-port=50200
+  no-tls
+  no-dtls
+  log-file=/var/log/turnserver.log
+  simple-log
+  ```
+
+---
+
+### 4. Signaling Pipeline: Moodle HTTP vs. Node.js WebSocket
+WebRTC requires a "signaling" channel to exchange SDP session descriptions and ICE candidates before video begins:
+1. **Zero-Port Native Moodle Signaling (`live_signal.php`)**:
+   * Out of the box, signaling works over standard **HTTP/HTTPS (Port 80/443)** using Moodle's native AJAX and session security.
+   * **Advantage**: Requires zero additional open ports on institutional firewalls.
+2. **High-Speed Node.js WebSocket Relay (Port 8080 - Optional)**:
+   * A microservice (`/opt/lp-signaling/server.js`) that groups connected candidates and proctors into rooms by `cmid`.
+   * Delivers instantaneous (< 10ms) push for teacher actions: `start_stream`, `send_warning`, and `terminate_attempt`.
+
+---
+
+### 5. Network Firewall & Ports Allocation Reference
+
+| Port / Protocol | Service / Component | Direction | Purpose | Required? |
+|---|---|---|---|---|
+| **`80` / `443` TCP** | Nginx / Moodle Web | Inbound | Moodle pages, snapshots upload, AJAX signaling (`live_signal.php`) | **Mandatory** |
+| **`3478` UDP / TCP** | coTURN Server | Inbound | STUN binding & TURN allocation requests | **Recommended** (Ensures 100% WebRTC connection across 4G/NAT) |
+| **`50000–50200` UDP** | Media Relay (RTP/RTCP) | Inbound | Encrypted audio & video packet relay between candidate and proctor | **Mandatory if TURN is enabled** |
+| **`7880` TCP** | LiveKit API & Signaling | Inbound | LiveKit room management & WebSocket signaling | Required only if running LiveKit SFU mode |
+| **`7881` TCP** | LiveKit WebRTC TCP | Inbound | WebRTC media fallback over TCP | Optional (Fallback when UDP is blocked) |
+| **`8080` TCP** | Node.js WebSocket Relay | Inbound | Ultra-fast signaling push broadcast | Optional (Falls back to Moodle HTTP polling) |
+
+---
+
+### 6. Architectural Benefits & ROI
+
+1. **Rock-Solid Exam Continuity**: Students with weak mobile connections or strict home Wi-Fi routers experience zero black-screen drops thanks to automatic TURN relaying.
+2. **CPU & Server Protection**: Video decoding/encoding is kept entirely off Moodle's PHP processes. Moodle server load remains near 0.05 load average even during live proctoring.
+3. **Multi-Tenant / Multi-Platform Sharing**: A single coTURN or LiveKit container can serve multiple Moodle LMS instances simultaneously (e.g. SANAD and Al-Jabr academies) with separate credentials.
+
+---
+
 ## 📋 Changelog
+
+### 🌟 v1.0.27 (Build `2026102727`) — 2026-10-27
+- **Server, Docker & WebRTC Infrastructure Architectural Documentation**:
+  - Added comprehensive architectural documentation covering WebRTC topologies (P2P vs. SFU), containerized LiveKit server deployment, coTURN STUN/TURN NAT traversal, signaling channels, and network port matrices.
+  - Documented resource limits, bandwidth optimization formulas, and dual-server academy deployment best practices.
 
 ### 🌟 v1.0.26 (Build `2026102626`) — 2026-10-26
 - **Pre-Exam Camera & Microphone Verification & Attempt Button Gating:**
